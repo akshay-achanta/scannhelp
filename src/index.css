@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ff7f00; /* Mandatory Orange */
+  --color-primary-dark: #cc6600;
+  --color-primary-light: #ffaa4d;
+  --color-background: #ffffff; /* Keep Light theme */
+  --color-surface: #f8f9fa;
+  --color-text-main: #1f2937; /* Dark Gray */
+  --color-text-muted: #6b7280;
+}
+
+:root {
+  font-family: 'Lexend', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: var(--color-text-main);
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* Account for fixed navbar */
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Neat Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface); 
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-light); 
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary); 
+}
+
+/* Custom styles for consistency with the old site */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--color-text-main);
+}
