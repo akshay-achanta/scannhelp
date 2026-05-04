@@ -32,9 +32,9 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors">Home</Link>
-            <a href="/#aboutus" className="text-gray-600 hover:text-primary font-medium transition-colors">About</a>
-            <a href="/#contactus" className="text-gray-600 hover:text-primary font-medium transition-colors">Contact</a>
+            <a href="/#product" className="text-gray-600 hover:text-primary font-medium transition-colors">Product</a>
+            <a href="/#safety" className="text-gray-600 hover:text-primary font-medium transition-colors">Safety</a>
+            <a href="/#contactus" className="text-gray-600 hover:text-primary font-medium transition-colors">Contact Us</a>
             
             <div className="flex items-center gap-4 ml-4 border-l border-gray-200 pl-8">
               <Link to="/login" className="text-gray-600 hover:text-primary font-medium transition-colors">
@@ -65,26 +65,26 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
           <div className="px-4 pt-2 pb-6 space-y-1">
-            <Link 
-              to="/" 
-              className="block px-3 py-3 text-base font-medium text-gray-800 hover:text-primary hover:bg-gray-50 rounded-lg"
-              onClick={() => setIsOpen(false)}
-            >
-              Home
-            </Link>
             <a 
-              href="/#aboutus" 
+              href="/#product" 
               className="block px-3 py-3 text-base font-medium text-gray-800 hover:text-primary hover:bg-gray-50 rounded-lg"
               onClick={() => setIsOpen(false)}
             >
-              About
+              Product
+            </a>
+            <a 
+              href="/#safety" 
+              className="block px-3 py-3 text-base font-medium text-gray-800 hover:text-primary hover:bg-gray-50 rounded-lg"
+              onClick={() => setIsOpen(false)}
+            >
+              Safety
             </a >
             <a 
               href="/#contactus" 
               className="block px-3 py-3 text-base font-medium text-gray-800 hover:text-primary hover:bg-gray-50 rounded-lg"
               onClick={() => setIsOpen(false)}
             >
-              Contact
+              Contact Us
             </a>
             
             <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 px-3">
