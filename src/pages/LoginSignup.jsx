@@ -187,7 +187,7 @@ export default function LoginSignup() {
                 onClick={handleSubmit}
                 className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition-all"
               >
-                <img src="/google-logo.svg" alt="Google" className="h-5 w-5 mr-3" />
+                <img src="/google-logo.png" alt="Google" className="h-5 w-5 mr-3" />
                 {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
               </button>
             </form>
