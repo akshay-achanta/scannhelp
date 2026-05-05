@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Search, 
-  QrCode, 
   HeartPulse, 
   Smartphone, 
   BellRing, 
@@ -218,10 +217,7 @@ export default function Home() {
             </div>
             <div className="bg-orange-50 rounded-3xl p-12 flex items-center justify-center mt-12 lg:mt-0">
               <div className="text-center">
-                <div className="inline-flex bg-white p-6 rounded-2xl shadow-xl mb-6">
-                  <QrCode className="h-32 w-32 text-primary" />
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">Scan<span className="text-primary">N</span>Help</h3>
+                <img src="/logo.jpg" alt="ScanNHelp Logo" className="w-64 md:w-80 max-w-full mx-auto mix-blend-multiply" />
               </div>
             </div>
           </div>

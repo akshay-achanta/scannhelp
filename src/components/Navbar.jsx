@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, QrCode } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,18 +15,8 @@ export default function Navbar() {
         <div className="flex justify-between h-20">
           {/* Logo Section */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
-                <QrCode className="h-8 w-8 text-primary" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold leading-none tracking-tight text-gray-900">
-                  Scan<span className="text-primary">N</span>Help
-                </span>
-                <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
-                  Secure Your Belongings
-                </span>
-              </div>
+            <Link to="/" className="flex items-center group">
+              <img src="/logo.jpg" alt="ScanNHelp Logo" className="h-14 md:h-16 object-contain" />
             </Link>
           </div>
 

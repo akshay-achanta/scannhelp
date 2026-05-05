@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom';
-import { QrCode } from 'lucide-react';
-
 export default function Footer() {
   return (
     <footer className="bg-gray-50 border-t border-gray-200 pt-16 pb-8">
@@ -9,13 +7,8 @@ export default function Footer() {
           
           {/* Brand Column */}
           <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4 group">
-              <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
-                <QrCode className="h-6 w-6 text-primary" />
-              </div>
-              <span className="text-xl font-bold leading-none tracking-tight text-gray-900">
-                Scan<span className="text-primary">N</span>Help
-              </span>
+            <Link to="/" className="flex items-center mb-4 group">
+              <img src="/logo.jpg" alt="ScanNHelp Logo" className="h-12 md:h-14 object-contain" />
             </Link>
             <p className="text-gray-500 text-sm leading-relaxed mb-6">
               Tag, Track, and Recover with ScanNHelp. Your reliable partner for finding lost items while protecting your privacy.
