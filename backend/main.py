@@ -19,11 +19,20 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ScanNHelp API")
 
 # ✅ CORS MUST be added before any routes
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://accurate-vision-production-48a0.up.railway.app",
+    "https://scannhelp-production.up.railway.app",
+    "https://scannhelp.com",
+    "https://www.scannhelp.com"
+]
+
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 if env_origins:
-    allowed_origins = [origin.strip() for origin in env_origins.split(",")]
-else:
-    allowed_origins = ["*"]
+    # Add any extra origins from env var, stripping quotes and whitespace
+    extra_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip()]
+    allowed_origins.extend(extra_origins)
 
 app.add_middleware(
     CORSMiddleware,
