@@ -18,6 +18,10 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ScanNHelp API")
 
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "ScanNHelp API is running"}
+
 # Configure CORS
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 if env_origins:
