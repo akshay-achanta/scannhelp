@@ -30,6 +30,9 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 # Copy nginx config as a TEMPLATE (contains $PORT placeholder)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
+# Limit worker processes to avoid OOM on Railway (default 'auto' spawns 50+ workers)
+RUN sed -i 's/worker_processes  auto;/worker_processes 2;/' /etc/nginx/nginx.conf
+
 # Railway sets PORT dynamically; default to 80 for local Docker
 ENV PORT=80
 
