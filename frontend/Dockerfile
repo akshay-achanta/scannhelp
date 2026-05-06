@@ -27,8 +27,11 @@ FROM nginx:stable-alpine
 # Copy the build output from the build stage to Nginx's serve directory
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Copy nginx config as a TEMPLATE (contains $PORT placeholder)
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+# Copy nginx config directly (NO template variables - sed handles port at runtime)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Remove the default nginx entrypoint template processing to avoid conflicts
+RUN rm -rf /etc/nginx/templates
 
 # Limit worker processes to avoid OOM on Railway (default 'auto' spawns 50+ workers)
 RUN sed -i 's/worker_processes  auto;/worker_processes 2;/' /etc/nginx/nginx.conf
@@ -36,8 +39,7 @@ RUN sed -i 's/worker_processes  auto;/worker_processes 2;/' /etc/nginx/nginx.con
 # Railway sets PORT dynamically; default to 80 for local Docker
 ENV PORT=80
 
-# Expose the port
 EXPOSE ${PORT}
 
-# Use envsubst to replace $PORT in the nginx template, then start nginx
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+# At runtime: replace port 80 with $PORT using sed, then start nginx
+CMD sh -c "sed -i \"s/listen 80;/listen ${PORT};/\" /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
