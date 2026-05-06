@@ -27,10 +27,14 @@ FROM nginx:stable-alpine
 # Copy the build output from the build stage to Nginx's serve directory
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Copy a custom nginx config to handle React Router (Single Page App)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config as a TEMPLATE (contains $PORT placeholder)
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Expose port 80
-EXPOSE 80
+# Railway sets PORT dynamically; default to 80 for local Docker
+ENV PORT=80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Expose the port
+EXPOSE ${PORT}
+
+# Use envsubst to replace $PORT in the nginx template, then start nginx
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
