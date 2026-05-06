@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment - NEVER copy this into Docker
+venv/
+.venv/
+env/
+
+# Environment variables - Railway provides these separately
+.env
+.env.local
+
+# Database files
+*.db
+*.sqlite3
+
+# Migration scripts
+migrate_db.py
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
