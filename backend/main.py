@@ -19,7 +19,12 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ScanNHelp API")
 
 # Configure CORS
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    allowed_origins = [origin.strip() for origin in env_origins.split(",")]
+else:
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

@@ -11,6 +11,10 @@ load_dotenv()
 # For Postgres: postgresql://user:password@localhost:5432/scannhelp
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./scannhelp.db")
 
+# Railway provides postgres:// but SQLAlchemy requires postgresql://
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
