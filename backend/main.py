@@ -18,11 +18,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ScanNHelp API")
 
-@app.get("/")
-def read_root():
-    return {"status": "online", "message": "ScanNHelp API is running"}
-
-# Configure CORS
+# ✅ CORS MUST be added before any routes
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 if env_origins:
     allowed_origins = [origin.strip() for origin in env_origins.split(",")]
@@ -38,6 +34,11 @@ app.add_middleware(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# Health check route
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "ScanNHelp API is running"}
 
 # Dependency to get current user
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -63,11 +64,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 @app.post("/signup", response_model=schemas.UserRead)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    print(f"Signup attempt for: {user.email}")
-    print(f"DEBUG: Password received length: {len(user.password)}")
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        print(f"Signup failed: Email {user.email} already registered")
         raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = auth.get_password_hash(user.password)
@@ -79,70 +77,53 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    print(f"Signup SUCCESSFUL for: {user.email}")
     return new_user
 
 @app.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    print(f"Login attempt for: {form_data.username}")
-    print(f"DEBUG: Login password length: {len(form_data.password)}")
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user:
-        print(f"Login failed: User {form_data.username} not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Try verifying
     is_valid = auth.verify_password(form_data.password, user.hashed_password)
     if not is_valid:
-        print(f"Login failed: Incorrect password for {form_data.username}")
-        # One last debug check: does it hash to the same thing if we use the same salt?
-        # (Passlib handles this internally, but we log the failure)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    print(f"Login SUCCESSFUL for: {form_data.username}")
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/auth/google")
 def google_auth(data: schemas.GoogleLogin, db: Session = Depends(get_db)):
     try:
-        # Verify the ID token
         idinfo = id_token.verify_oauth2_token(data.id_token, requests.Request(), GOOGLE_CLIENT_ID)
         
         email = idinfo['email']
         name = idinfo.get('name', '')
         
-        # Check if user exists
         user = db.query(models.User).filter(models.User.email == email).first()
         
         if not user:
-            # Create a new user if they don't exist
-            # We don't have a password for Google users, so we can use a random one or leave it empty
-            # Standard practice is to set a random hash or null
-            print(f"Creating new Google user: {email}")
             user = models.User(
                 email=email,
                 full_name=name,
-                hashed_password=auth.get_password_hash(os.urandom(24).hex()) # Random password
+                hashed_password=auth.get_password_hash(os.urandom(24).hex())
             )
             db.add(user)
             db.commit()
             db.refresh(user)
         
-        print(f"Google Login SUCCESSFUL for: {email}")
         access_token = auth.create_access_token(data={"sub": email})
         return {"access_token": access_token, "token_type": "bearer"}
         
     except ValueError:
-        # Invalid token
         raise HTTPException(status_code=400, detail="Invalid Google token")
 
 # --- Product Endpoints ---
@@ -228,7 +209,3 @@ def scan_id(id: str, db: Session = Depends(get_db)):
         return {"type": "health", "data": health}
     
     raise HTTPException(status_code=404, detail="Tag ID not found")
-
-@app.get("/")
-def read_root():
-    return {"message": "ScanNHelp API is running"}
