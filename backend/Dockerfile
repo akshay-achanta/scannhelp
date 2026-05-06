@@ -27,5 +27,5 @@ COPY . .
 EXPOSE 8000
 
 # Command to run the application
-# We use 0.0.0.0 to allow external connections and use the PORT env variable from Railway
+# sh -c is required so that $PORT gets shell-expanded before passing to uvicorn
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
