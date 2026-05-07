@@ -14,27 +14,29 @@ import toast from 'react-hot-toast';
 const schema = z.object({
   id: z.string().min(1, 'Tag ID is required'),
   blood_group: z.string().min(1, 'Blood group is required'),
-  existing_health_issues: z.string().optional(),
-  primary_doctor_number: z.string().optional(),
-  allergies: z.string().optional(),
-  existing_medicines: z.string().optional(),
-  notes: z.string().optional(),
+  existing_health_issues: z.string().max(500).optional(),
+  primary_doctor_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
+  allergies: z.string().max(500).optional(),
+  existing_medicines: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
   physically_disabled: z.boolean().default(false),
-  name: z.string().min(1, 'Name is required'),
-  mobile: z.string().min(1, 'Phone number is required'),
-  alt_number: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
+  name: z.string().min(1, 'Name is required').max(100),
+  mobile: z.string().min(1, 'Phone number is required').regex(/^\d+$/, 'Must contain only digits').max(20),
+  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
+  address: z.string().min(1, 'Address is required').max(255),
   display_information: z.boolean().default(false),
 });
 
 export default function RegisterHealth() {
-  useRequireAuth();
+  const token = useRequireAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialId = searchParams.get('id') || '';
   const [loading, setLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+
+  if (!token || token === 'null') return null;
 
   const { register, handleSubmit, reset, trigger, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -93,7 +95,10 @@ export default function RegisterHealth() {
             setIsEdit(true);
           }
         } catch (err) {
-          console.error('Failed to fetch existing profile:', err);
+          // If 404, it's a new profile registration, which is fine
+          if (err.message !== 'Failed to fetch health profile') {
+            console.error('Failed to fetch existing profile:', err);
+          }
         }
       }
       fetchExisting();
@@ -267,16 +272,33 @@ export default function RegisterHealth() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Emergency Phone Number *</label>
-                    <input {...register('mobile')} className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} placeholder="+91 00000 00000" />
+                    <input 
+                      {...register('mobile')} 
+                      onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
+                      placeholder="0000000000" 
+                    />
                     {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Alternate Phone Number</label>
-                    <input {...register('alt_number')} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500" />
+                    <input 
+                      {...register('alt_number')} 
+                      onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.alt_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
+                      placeholder="Optional"
+                    />
+                    {errors.alt_number && <p className="mt-1 text-xs text-red-500">{errors.alt_number.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Primary Doctor's Number</label>
-                    <input {...register('primary_doctor_number')} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500" />
+                    <input 
+                      {...register('primary_doctor_number')} 
+                      onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.primary_doctor_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
+                      placeholder="Optional"
+                    />
+                    {errors.primary_doctor_number && <p className="mt-1 text-xs text-red-500">{errors.primary_doctor_number.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Full Address *</label>

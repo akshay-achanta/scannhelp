@@ -12,8 +12,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-prod")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
 
-# Use simple bcrypt context
-pwd_context = CryptContext(schemes=["bcrypt"])
+# Use robust bcrypt context with auto-deprecation handling
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)

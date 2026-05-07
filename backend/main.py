@@ -22,8 +22,11 @@ app = FastAPI(title="ScanNHelp API")
 allowed_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://172.20.113.185:5173",
+    "http://172.20.113.185.nip.io:5173",
     "https://accurate-vision-production-48a0.up.railway.app",
     "https://scannhelp-production.up.railway.app",
+    "https://scannhelp.vercel.app",
     "https://scannhelp.com",
     "https://www.scannhelp.com"
 ]

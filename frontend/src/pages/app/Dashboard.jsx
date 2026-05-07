@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  useRequireAuth();
+  const token = useRequireAuth();
   const [activeTab, setActiveTab] = useState('products');
   const [productRecords, setProductRecords] = useState([]);
   const [healthRecords, setHealthRecords] = useState([]);
@@ -24,6 +24,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!token || token === 'null') {
+      setLoading(false);
+      return;
+    }
+
     async function fetchData() {
       try {
         const [products, health] = await Promise.all([
@@ -40,6 +45,8 @@ export default function Dashboard() {
     }
     fetchData();
   }, []);
+
+  if (!token || token === 'null') return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">

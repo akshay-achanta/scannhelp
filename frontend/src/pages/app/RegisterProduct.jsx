@@ -13,26 +13,28 @@ import toast from 'react-hot-toast';
 
 const schema = z.object({
   id: z.string().min(1, 'Tag ID is required'),
-  device_name: z.string().min(1, 'Device name is required'),
+  device_name: z.string().min(1, 'Device name is required').max(100),
   display_information: z.boolean().default(false),
   is_lost: z.boolean().default(false),
-  description: z.string().optional(),
-  name: z.string().min(1, 'Name is required'),
-  mobile: z.string().min(1, 'Mobile is required'),
-  alt_number: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
-  reward_amount: z.string().optional(),
-  notes: z.string().optional(),
+  description: z.string().max(500).optional(),
+  name: z.string().min(1, 'Name is required').max(100),
+  mobile: z.string().min(1, 'Mobile is required').regex(/^\d+$/, 'Must contain only digits').max(20),
+  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
+  address: z.string().min(1, 'Address is required').max(255),
+  reward_amount: z.string().regex(/^\d*$/, 'Must contain only digits').max(50).optional(),
+  notes: z.string().max(1000).optional(),
 });
 
 export default function RegisterProduct() {
-  useRequireAuth();
+  const token = useRequireAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialId = searchParams.get('id') || '';
   const [loading, setLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+
+  if (!token || token === 'null') return null;
 
   const { register, handleSubmit, reset, trigger, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -85,7 +87,10 @@ export default function RegisterProduct() {
             setIsEdit(true);
           }
         } catch (err) {
-          console.error('Failed to fetch existing product:', err);
+          // If 404, it's a new product registration, which is fine
+          if (err.message !== 'Failed to fetch product') {
+            console.error('Failed to fetch existing product:', err);
+          }
         }
       }
       fetchExisting();
@@ -241,11 +246,23 @@ export default function RegisterProduct() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1">Mobile *</label>
-                      <input {...register('mobile')} className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} placeholder="+91 00000 00000" />
+                      <input 
+                        {...register('mobile')} 
+                        onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                        className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
+                        placeholder="0000000000" 
+                      />
+                      {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1">Alt. Number</label>
-                      <input {...register('alt_number')} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-primary" />
+                      <input 
+                        {...register('alt_number')} 
+                        onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                        className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.alt_number ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
+                        placeholder="Optional"
+                      />
+                      {errors.alt_number && <p className="mt-1 text-xs text-red-500">{errors.alt_number.message}</p>}
                     </div>
                   </div>
                   <div>
@@ -267,7 +284,14 @@ export default function RegisterProduct() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Reward (₹)</label>
-                    <input type="number" {...register('reward_amount')} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-primary" placeholder="Optional: e.g. 500" />
+                    <input 
+                      type="text" 
+                      {...register('reward_amount')} 
+                      onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.reward_amount ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
+                      placeholder="Optional: e.g. 500" 
+                    />
+                    {errors.reward_amount && <p className="mt-1 text-xs text-red-500">{errors.reward_amount.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Custom Message for Finder</label>

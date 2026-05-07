@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function LoginSignup() {
@@ -12,6 +12,7 @@ export default function LoginSignup() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Determine initial state based on route
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function LoginSignup() {
         { theme: "outline", size: "large", width: 400, text: "continue_with" }
       );
     }
-  }, [location.pathname, isLogin]);
+  }, [location.pathname]);
 
   async function handleGoogleResponse(response) {
     setLoading(true);
@@ -47,7 +48,7 @@ export default function LoginSignup() {
       
       const params = new URLSearchParams(location.search);
       const redirect = params.get('redirect');
-      navigate(redirect ? decodeURIComponent(redirect) : '/app/dashboard', { replace: true });
+      navigate(redirect || '/app/dashboard', { replace: true });
     } catch (err) {
       setError(err.message || 'Google Login failed');
     } finally {
@@ -74,7 +75,7 @@ export default function LoginSignup() {
 
       const params = new URLSearchParams(location.search);
       const redirect = params.get('redirect');
-      navigate(redirect ? decodeURIComponent(redirect) : '/app/dashboard', { replace: true });
+      navigate(redirect || '/app/dashboard', { replace: true });
     } catch (err) {
       setError(err.message || 'An error occurred during authentication');
     } finally {
@@ -182,13 +183,20 @@ export default function LoginSignup() {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary sm:text-sm transition-colors"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
 
