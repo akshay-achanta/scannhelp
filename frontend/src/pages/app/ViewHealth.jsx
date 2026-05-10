@@ -16,20 +16,15 @@ export default function ViewHealth() {
   useEffect(() => {
     async function fetchRecord() {
       try {
-        const result = await api.scanId(id);
-        if (result.type === 'health') {
-          // Map backend fields to frontend expectations if necessary
-          const mappedData = {
-            ...result.data,
-            mobile: result.data.emergency_phone,
-            existing_health_issues: result.data.conditions,
-            existing_medicines: result.data.medications
-          };
-          setRecord(mappedData);
-        } else {
-          toast.error('Not a health profile tag');
-          navigate('/app/dashboard');
-        }
+        const result = await api.getHealthProfile(id);
+        // Map backend fields to frontend expectations
+        const mappedData = {
+          ...result,
+          mobile: result.emergency_phone,
+          existing_health_issues: result.conditions,
+          existing_medicines: result.medications
+        };
+        setRecord(mappedData);
       } catch (err) {
         console.error('Failed to fetch health profile:', err);
       } finally {
@@ -46,6 +41,22 @@ export default function ViewHealth() {
     link.download = `scannhelp-health-${id}.png`;
     link.href = url;
     link.click();
+  };
+
+  const toggleVisibilityStatus = async () => {
+    try {
+      const updatedStatus = !record.display_information;
+      const updatedRecord = await api.updateHealthProfile(id, { display_information: updatedStatus });
+      setRecord({
+          ...updatedRecord,
+          mobile: updatedRecord.emergency_phone,
+          existing_health_issues: updatedRecord.conditions,
+          existing_medicines: updatedRecord.medications
+      });
+      toast.success(`Profile marked as ${updatedStatus ? 'VISIBLE TO PUBLIC' : 'PRIVATE'}`);
+    } catch (err) {
+      toast.error('Failed to update status');
+    }
   };
 
   if (loading) {
@@ -104,12 +115,24 @@ export default function ViewHealth() {
           <h2 className="text-2xl font-bold text-gray-900 mb-1">{record.name}</h2>
           <p className="text-sm text-gray-500 mb-6 font-mono">Profile ID: {id}</p>
           
-          <button 
-            onClick={downloadQR}
-            className="flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all mx-auto"
-          >
-            <Download className="h-5 w-5" /> Download QR
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              onClick={downloadQR}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
+            >
+              <Download className="h-5 w-5" /> Download QR
+            </button>
+            <button 
+              onClick={toggleVisibilityStatus}
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                record.display_information 
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              <ShieldCheck className="h-5 w-5" /> {record.display_information ? 'Disable Public View' : 'Visible to Public'}
+            </button>
+          </div>
         </div>
 
         {/* Security Alert if hidden */}

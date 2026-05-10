@@ -25,36 +25,45 @@ export default function ScanRedirect() {
       return;
     }
 
-    // Force login first
-    if (!user) {
-      const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      console.log('User not logged in, redirecting to login with:', currentUrl);
-      navigate(`/login?redirect=${currentUrl}`, { replace: true });
-      return;
-    }
-
     async function checkTag() {
       try {
-        console.log('Checking tag in DB...');
-        const result = await api.scanId(t_id);
-        console.log('Tag found:', result);
-        if (result.type === 'product') {
-          navigate(`/app/view/product/${t_id}`, { replace: true });
-        } else if (result.type === 'health') {
-          navigate(`/app/view/health/${t_id}`, { replace: true });
+        console.log('Verifying scan...');
+        const result = await api.verifyScan(t_t || 1, t_id);
+        console.log('Verification result:', result);
+
+        switch (result.status) {
+          case 'unassigned':
+            // If not assigned, go to registration.
+            const registerPath = t_t === '2' 
+              ? `/app/register/health?id=${t_id}` 
+              : `/app/register/product?id=${t_id}`;
+            
+            const token = localStorage.getItem('scannhelp_token');
+            const user = localStorage.getItem('scannhelp_user');
+            
+            if (token && token !== 'null' && token !== 'undefined' && user) {
+              console.log('User logged in, going to registration:', registerPath);
+              navigate(registerPath, { replace: true });
+            } else {
+              // Strictly force login/signup first
+              console.log('User not logged in, forcing login/signup');
+              navigate(`/login?redirect=${encodeURIComponent(registerPath)}`, { replace: true });
+            }
+            break;
+          case 'assigned':
+            // If assigned but NOT lost -> strict privacy (Not Found)
+            navigate('/not-found', { replace: true });
+            break;
+          case 'lost':
+            // If marked as LOST -> show public details
+            navigate(`/app/public-details/${t_id}?t_t=${t_t}`, { replace: true });
+            break;
+          default:
+            navigate('/not-found', { replace: true });
         }
       } catch (err) {
-        console.log('Tag not found in DB, redirecting to registration...');
-        if (t_t === '1') {
-          console.log('Redirecting to Product Registration');
-          navigate(`/app/register/product?id=${t_id}`, { replace: true });
-        } else if (t_t === '2') {
-          console.log('Redirecting to Health Registration');
-          navigate(`/app/register/health?id=${t_id}`, { replace: true });
-        } else {
-          console.log('Unknown tag type, going to dashboard');
-          navigate('/app/dashboard', { replace: true });
-        }
+        console.error('Scan error:', err);
+        navigate('/not-found', { replace: true });
       }
     }
 

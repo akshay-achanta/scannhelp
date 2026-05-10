@@ -159,4 +159,32 @@ export const api = {
     if (!response.ok) throw new Error('Tag not found');
     return response.json();
   },
+
+  async verifyScan(t_t, t_id) {
+    const response = await fetch(`${API_URL}/scan/verify?t_t=${t_t}&t_id=${t_id}`);
+    if (!response.ok) throw new Error('Verification failed');
+    return response.json();
+  },
+
+  async activateTag(t_t, t_id, details) {
+    const response = await fetch(`${API_URL}/activate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ t_t: parseInt(t_t), t_id, details }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Activation failed');
+    }
+    return response.json();
+  },
+
+  async getPublicDetails(id, t_t) {
+    const response = await fetch(`${API_URL}/public-details/${id}?t_t=${t_t}`);
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('NOT_FOUND');
+      throw new Error('Failed to fetch details');
+    }
+    return response.json();
+  },
 };

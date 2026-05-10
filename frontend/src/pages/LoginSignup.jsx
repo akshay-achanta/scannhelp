@@ -25,7 +25,7 @@ export default function LoginSignup() {
     /* global google */
     if (window.google && !window.google_initialized) {
       window.google.accounts.id.initialize({
-        client_id: "496849303742-4gbaq89c5r93o8b36qs1rd9p89qme11k.apps.googleusercontent.com", 
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID, 
         callback: handleGoogleResponse
       });
       window.google_initialized = true;

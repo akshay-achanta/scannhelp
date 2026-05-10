@@ -104,3 +104,16 @@ class HealthRead(HealthBase):
 
     class Config:
         from_attributes = True
+
+# --- Verification & Activation ---
+
+class TagVerifyResponse(BaseModel):
+    t_id: str
+    t_t: int
+    status: Literal['unassigned', 'assigned', 'lost']
+    data: Optional[dict] = None
+
+class TagActivateRequest(BaseModel):
+    t_id: str
+    t_t: int
+    details: dict

@@ -20,9 +20,12 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(String, primary_key=True, index=True) # QR ID
+    t_id = Column(String, index=True) # Legacy QR ID
+    t_t = Column(Integer, default=1)
     user_id = Column(Integer, ForeignKey("users.id"))
     device_name = Column(String, nullable=False)
     display_information = Column(Boolean, default=False)
+    is_assigned = Column(Boolean, default=True)
     is_lost = Column(Boolean, default=False)
     description = Column(String)
     name = Column(String)
@@ -39,6 +42,8 @@ class HealthProfile(Base):
     __tablename__ = "health_profiles"
 
     id = Column(String, primary_key=True, index=True) # QR ID
+    t_id = Column(String, index=True) # Legacy QR ID
+    t_t = Column(Integer, default=2)
     user_id = Column(Integer, ForeignKey("users.id"))
     name = Column(String, nullable=False)
     blood_group = Column(String)
@@ -52,6 +57,7 @@ class HealthProfile(Base):
     notes = Column(String)
     physically_disabled = Column(Boolean, default=False)
     display_information = Column(Boolean, default=False)
+    is_assigned = Column(Boolean, default=True)
     primary_doctor_number = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 

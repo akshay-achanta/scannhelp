@@ -16,13 +16,8 @@ export default function ViewProduct() {
   useEffect(() => {
     async function fetchRecord() {
       try {
-        const result = await api.scanId(id);
-        if (result.type === 'product') {
-          setRecord(result.data);
-        } else {
-          toast.error('Not a product tag');
-          navigate('/app/dashboard');
-        }
+        const result = await api.getProduct(id);
+        setRecord(result);
       } catch (err) {
         console.error('Failed to fetch product:', err);
       } finally {
