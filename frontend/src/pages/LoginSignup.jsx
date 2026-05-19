@@ -44,7 +44,8 @@ export default function LoginSignup() {
     try {
       const data = await api.googleLogin(response.credential);
       // Backend returns the user data in some form or we fetch it
-      localStorage.setItem('scannhelp_user', JSON.stringify({ email: 'Google User' }));
+      sessionStorage.setItem('scannhelp_user', JSON.stringify({ email: 'Google User' }));
+      sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
       
       const params = new URLSearchParams(location.search);
       const redirect = params.get('redirect');
@@ -65,12 +66,14 @@ export default function LoginSignup() {
       if (isLogin) {
         await api.login(email, password);
         const userData = { email };
-        localStorage.setItem('scannhelp_user', JSON.stringify(userData));
+        sessionStorage.setItem('scannhelp_user', JSON.stringify(userData));
+        sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
       } else {
         await api.signup({ email, full_name: name, password });
         await api.login(email, password);
         const userData = { email, full_name: name };
-        localStorage.setItem('scannhelp_user', JSON.stringify(userData));
+        sessionStorage.setItem('scannhelp_user', JSON.stringify(userData));
+        sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
       }
 
       const params = new URLSearchParams(location.search);

@@ -13,14 +13,14 @@ import toast from 'react-hot-toast';
 
 const schema = z.object({
   id: z.string().min(1, 'Tag ID is required'),
-  device_name: z.string().min(1, 'Device name is required').max(100),
+  device_name: z.string().min(1, 'Device name is required').max(100).regex(/[a-zA-Z]/, 'Device name must contain at least one letter'),
   display_information: z.boolean().default(false),
   is_lost: z.boolean().default(false),
   description: z.string().max(500).optional(),
-  name: z.string().min(1, 'Name is required').max(100),
-  mobile: z.string().min(1, 'Mobile is required').regex(/^\d+$/, 'Must contain only digits').max(20),
-  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
-  address: z.string().min(1, 'Address is required').max(255),
+  name: z.string().min(1, 'Name is required').max(100).regex(/[a-zA-Z]/, 'Name must contain at least one letter'),
+  mobile: z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Must contain only digits'),
+  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
+  address: z.string().min(1, 'Address is required').max(255).regex(/[a-zA-Z]/, 'Address must contain letters'),
   reward_amount: z.string().regex(/^\d*$/, 'Must contain only digits').max(50).optional(),
   notes: z.string().max(1000).optional(),
 });
@@ -108,7 +108,7 @@ export default function RegisterProduct() {
         await api.createProduct(data);
         toast.success('Product registered successfully!');
       }
-      navigate('/app/dashboard');
+      navigate('/app/dashboard/products');
     } catch (err) {
       toast.error(err.message || 'Failed to save product');
     } finally {
@@ -248,6 +248,7 @@ export default function RegisterProduct() {
                       <label className="block text-sm font-bold text-gray-700 mb-1">Mobile *</label>
                       <input 
                         {...register('mobile')} 
+                        maxLength={10}
                         onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
                         className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
                         placeholder="0000000000" 
@@ -258,6 +259,7 @@ export default function RegisterProduct() {
                       <label className="block text-sm font-bold text-gray-700 mb-1">Alt. Number</label>
                       <input 
                         {...register('alt_number')} 
+                        maxLength={10}
                         onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
                         className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.alt_number ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
                         placeholder="Optional"

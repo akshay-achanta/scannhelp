@@ -34,6 +34,8 @@ function App() {
           
           {/* App Routes */}
           <Route path="app/dashboard" element={<Dashboard />} />
+          <Route path="app/dashboard/products" element={<Dashboard />} />
+          <Route path="app/dashboard/health" element={<Dashboard />} />
           <Route path="app/register/product" element={<RegisterProduct />} />
           <Route path="app/register/health" element={<RegisterHealth />} />
           <Route path="app/view/product/:id" element={<ViewProduct />} />

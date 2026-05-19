@@ -15,7 +15,7 @@ export default function ScanRedirect() {
     const t_t = searchParams.get('t_t'); // 1 for product, 2 for health
     const raw_t_id = searchParams.get('t_id');
     const t_id = raw_t_id ? raw_t_id.trim().replace(/:$/, '') : null;
-    const user = localStorage.getItem('scannhelp_user');
+    const user = sessionStorage.getItem('scannhelp_user');
 
     console.log('Scanning Tag:', { t_t, t_id });
 
@@ -38,8 +38,8 @@ export default function ScanRedirect() {
               ? `/app/register/health?id=${t_id}` 
               : `/app/register/product?id=${t_id}`;
             
-            const token = localStorage.getItem('scannhelp_token');
-            const user = localStorage.getItem('scannhelp_user');
+            const token = sessionStorage.getItem('scannhelp_token');
+            const user = sessionStorage.getItem('scannhelp_user');
             
             if (token && token !== 'null' && token !== 'undefined' && user) {
               console.log('User logged in, going to registration:', registerPath);

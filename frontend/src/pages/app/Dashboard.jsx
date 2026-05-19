@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRequireAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { 
@@ -16,7 +16,8 @@ import {
 
 export default function Dashboard() {
   const token = useRequireAuth();
-  const [activeTab, setActiveTab] = useState('products');
+  const location = useLocation();
+  const activeTab = location.pathname.endsWith('/health') ? 'health' : 'products';
   const [productRecords, setProductRecords] = useState([]);
   const [healthRecords, setHealthRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-900">Your Dashboard</h1>
             <div className="flex mt-6 border-b border-gray-100">
               <button
-                onClick={() => setActiveTab('products')}
+                onClick={() => navigate('/app/dashboard/products')}
                 className={`px-6 py-3 text-sm font-medium transition-colors relative ${
                   activeTab === 'products' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -68,7 +69,7 @@ export default function Dashboard() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('health')}
+                onClick={() => navigate('/app/dashboard/health')}
                 className={`px-6 py-3 text-sm font-medium transition-colors relative ${
                   activeTab === 'health' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
                 }`}

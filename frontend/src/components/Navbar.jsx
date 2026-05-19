@@ -9,7 +9,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const checkUser = () => {
-      const savedUser = localStorage.getItem('scannhelp_user');
+      const savedUser = sessionStorage.getItem('scannhelp_user');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       } else {
@@ -19,20 +19,18 @@ export default function Navbar() {
 
     checkUser();
     
-    // Listen for storage changes (for same-page updates if needed)
-    window.addEventListener('storage', checkUser);
-    
-    // Polling as a fallback for same-tab localStorage updates
+    // Polling as a fallback for same-tab sessionStorage updates
     const interval = setInterval(checkUser, 1000);
 
     return () => {
-      window.removeEventListener('storage', checkUser);
       clearInterval(interval);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token');
+    sessionStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token_expires_at');
     setUser(null);
     navigate('/');
   };

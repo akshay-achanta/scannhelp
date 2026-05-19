@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Literal
 import datetime
+import re
 
 class Token(BaseModel):
     access_token: str
@@ -40,8 +41,29 @@ class ProductBase(BaseModel):
     notes: Optional[str] = Field(None, max_length=1000)
 
 class ProductCreate(ProductBase):
-    mobile: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
-    alt_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
+    mobile: Optional[str] = Field(None, min_length=10, max_length=10, pattern=r'^\d{10}$')
+    alt_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
+
+    @field_validator('device_name')
+    @classmethod
+    def device_name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Device name must contain at least one letter')
+        return v
+
+    @field_validator('name')
+    @classmethod
+    def name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Name must contain at least one letter')
+        return v
+
+    @field_validator('address')
+    @classmethod
+    def address_must_have_letters(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Address must contain letters')
+        return v
 
 class ProductUpdate(BaseModel):
     device_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -49,11 +71,32 @@ class ProductUpdate(BaseModel):
     is_lost: Optional[bool] = None
     description: Optional[str] = Field(None, max_length=500)
     name: Optional[str] = Field(None, max_length=100)
-    mobile: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
-    alt_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
+    mobile: Optional[str] = Field(None, min_length=10, max_length=10, pattern=r'^\d{10}$')
+    alt_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
     address: Optional[str] = Field(None, max_length=255)
     reward_amount: Optional[str] = Field(None, max_length=50)
     notes: Optional[str] = Field(None, max_length=1000)
+
+    @field_validator('device_name')
+    @classmethod
+    def device_name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Device name must contain at least one letter')
+        return v
+
+    @field_validator('name')
+    @classmethod
+    def name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Name must contain at least one letter')
+        return v
+
+    @field_validator('address')
+    @classmethod
+    def address_must_have_letters(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Address must contain letters')
+        return v
 
 class ProductRead(ProductBase):
     user_id: int
@@ -79,9 +122,23 @@ class HealthBase(BaseModel):
     primary_doctor_number: Optional[str] = Field(None, max_length=20)
 
 class HealthCreate(HealthBase):
-    emergency_phone: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
-    alt_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
-    primary_doctor_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
+    emergency_phone: Optional[str] = Field(None, min_length=10, max_length=10, pattern=r'^\d{10}$')
+    alt_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
+    primary_doctor_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
+
+    @field_validator('name')
+    @classmethod
+    def name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Name must contain at least one letter')
+        return v
+
+    @field_validator('address')
+    @classmethod
+    def address_must_have_letters(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Address must contain letters')
+        return v
 
 class HealthUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -90,13 +147,27 @@ class HealthUpdate(BaseModel):
     medications: Optional[str] = Field(None, max_length=500)
     conditions: Optional[str] = Field(None, max_length=500)
     emergency_contact: Optional[str] = Field(None, max_length=100)
-    emergency_phone: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
-    alt_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
+    emergency_phone: Optional[str] = Field(None, min_length=10, max_length=10, pattern=r'^\d{10}$')
+    alt_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
     address: Optional[str] = Field(None, max_length=255)
     notes: Optional[str] = Field(None, max_length=1000)
     physically_disabled: Optional[bool] = None
     display_information: Optional[bool] = None
-    primary_doctor_number: Optional[str] = Field(None, max_length=20, pattern=r'^\d*$')
+    primary_doctor_number: Optional[str] = Field(None, max_length=10, pattern=r'^\d*$')
+
+    @field_validator('name')
+    @classmethod
+    def name_no_digits(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Name must contain at least one letter')
+        return v
+
+    @field_validator('address')
+    @classmethod
+    def address_must_have_letters(cls, v):
+        if v and not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Address must contain letters')
+        return v
 
 class HealthRead(HealthBase):
     user_id: int

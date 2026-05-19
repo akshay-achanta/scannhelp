@@ -2,7 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const API_URL = BASE_URL.replace(/\/$/, '');
 
 const getHeaders = () => {
-  const token = localStorage.getItem('scannhelp_token');
+  const token = sessionStorage.getItem('scannhelp_token');
   return {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -11,8 +11,9 @@ const getHeaders = () => {
 
 const handleResponse = async (response) => {
   if (response.status === 401) {
-    localStorage.removeItem('scannhelp_token');
-    localStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token');
+    sessionStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token_expires_at');
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
@@ -53,7 +54,8 @@ export const api = {
     }
 
     const data = await response.json();
-    localStorage.setItem('scannhelp_token', data.access_token);
+    sessionStorage.setItem('scannhelp_token', data.access_token);
+    sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
     return data;
   },
 
@@ -70,13 +72,15 @@ export const api = {
     }
 
     const data = await response.json();
-    localStorage.setItem('scannhelp_token', data.access_token);
+    sessionStorage.setItem('scannhelp_token', data.access_token);
+    sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
     return data;
   },
 
   logout() {
-    localStorage.removeItem('scannhelp_token');
-    localStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token');
+    sessionStorage.removeItem('scannhelp_user');
+    sessionStorage.removeItem('scannhelp_token_expires_at');
   },
 
   // Products

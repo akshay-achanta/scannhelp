@@ -15,15 +15,15 @@ const schema = z.object({
   id: z.string().min(1, 'Tag ID is required'),
   blood_group: z.string().min(1, 'Blood group is required'),
   existing_health_issues: z.string().max(500).optional(),
-  primary_doctor_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
+  primary_doctor_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
   allergies: z.string().max(500).optional(),
   existing_medicines: z.string().max(500).optional(),
   notes: z.string().max(1000).optional(),
   physically_disabled: z.boolean().default(false),
-  name: z.string().min(1, 'Name is required').max(100),
-  mobile: z.string().min(1, 'Phone number is required').regex(/^\d+$/, 'Must contain only digits').max(20),
-  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(20).optional(),
-  address: z.string().min(1, 'Address is required').max(255),
+  name: z.string().min(1, 'Name is required').max(100).regex(/[a-zA-Z]/, 'Name must contain at least one letter'),
+  mobile: z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Must contain only digits'),
+  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
+  address: z.string().min(1, 'Address is required').max(255).regex(/[a-zA-Z]/, 'Address must contain letters'),
   display_information: z.boolean().default(false),
 });
 
@@ -135,7 +135,7 @@ export default function RegisterHealth() {
         });
         toast.success('Health profile saved!');
       }
-      navigate('/app/dashboard');
+      navigate('/app/dashboard/health');
     } catch (err) {
       toast.error(err.message || 'Failed to save health profile');
     } finally {
@@ -274,6 +274,7 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Emergency Phone Number *</label>
                     <input 
                       {...register('mobile')} 
+                      maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
                       placeholder="0000000000" 
@@ -284,6 +285,7 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Alternate Phone Number</label>
                     <input 
                       {...register('alt_number')} 
+                      maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.alt_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
                       placeholder="Optional"
@@ -294,6 +296,7 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Primary Doctor's Number</label>
                     <input 
                       {...register('primary_doctor_number')} 
+                      maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.primary_doctor_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
                       placeholder="Optional"
