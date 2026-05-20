@@ -15,7 +15,8 @@ const handleResponse = async (response) => {
     sessionStorage.removeItem('scannhelp_user');
     sessionStorage.removeItem('scannhelp_token_expires_at');
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${currentPath}`;
     }
     throw new Error('Session expired. Please login again.');
   }

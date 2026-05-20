@@ -39,7 +39,8 @@ export default function MainLayout() {
         sessionStorage.removeItem('scannhelp_user');
         sessionStorage.removeItem('scannhelp_token_expires_at');
         setShowWarning(false);
-        navigate('/login?expired=true');
+        const redirectPath = encodeURIComponent(window.location.pathname + window.location.search);
+        navigate(`/login?expired=true&redirect=${redirectPath}`);
       } else {
         setShowWarning(false);
       }
@@ -59,7 +60,8 @@ export default function MainLayout() {
     sessionStorage.removeItem('scannhelp_user');
     sessionStorage.removeItem('scannhelp_token_expires_at');
     setShowWarning(false);
-    navigate('/login');
+    const redirectPath = encodeURIComponent(window.location.pathname + window.location.search);
+    navigate(`/login?redirect=${redirectPath}`);
   };
 
   return (

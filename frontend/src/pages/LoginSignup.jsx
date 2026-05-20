@@ -16,6 +16,14 @@ export default function LoginSignup() {
 
   // Determine initial state based on route
   useEffect(() => {
+    // Check if user is already logged in
+    const token = sessionStorage.getItem('scannhelp_token');
+    const user = sessionStorage.getItem('scannhelp_user');
+    if (token && token !== 'null' && user) {
+      navigate('/app/dashboard', { replace: true });
+      return;
+    }
+
     if (location.pathname === '/signup') {
       setIsLogin(false);
     } else {
