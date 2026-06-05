@@ -7,7 +7,7 @@ import { useRequireAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { 
   ArrowLeft, ArrowRight, Package, User, Phone, MapPin, 
-  Award, Loader2, Check, Smartphone, Eye, CheckCircle2 
+  Loader2, Check, Smartphone, CheckCircle2 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -33,10 +33,12 @@ export default function RegisterProduct() {
   const [loading, setLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [savedContacts, setSavedContacts] = useState([]);
+  const [selectedContactIndex, setSelectedContactIndex] = useState(-1);
 
   if (!token || token === 'null') return null;
 
-  const { register, handleSubmit, reset, trigger, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, trigger, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       id: initialId,
@@ -50,9 +52,8 @@ export default function RegisterProduct() {
   const nextStep = async () => {
     const fieldsForStep = {
       1: ['id', 'device_name'],
-      2: ['display_information', 'is_lost'],
-      3: ['name', 'mobile', 'address'],
-      4: ['reward_amount', 'notes'],
+      2: ['name', 'mobile', 'address'],
+      3: [],
     };
     
     const isValid = await trigger(fieldsForStep[currentStep]);
@@ -69,13 +70,36 @@ export default function RegisterProduct() {
 
   const steps = [
     { title: 'Item', icon: Smartphone },
-    { title: 'Privacy', icon: Eye },
     { title: 'Contact', icon: User },
-    { title: 'Reward', icon: Award },
     { title: 'Review', icon: CheckCircle2 }
   ];
 
   const formData = watch();
+
+  useEffect(() => {
+    async function fetchContacts() {
+      try {
+        const products = await api.getProducts();
+        const contacts = [];
+        const seenNames = new Set();
+        products.forEach(p => {
+          if (p.name && !seenNames.has(p.name)) {
+            seenNames.add(p.name);
+            contacts.push({
+              name: p.name,
+              mobile: p.mobile,
+              alt_number: p.alt_number || '',
+              address: p.address || ''
+            });
+          }
+        });
+        setSavedContacts(contacts);
+      } catch (err) {
+        console.error('Failed to fetch past contacts', err);
+      }
+    }
+    fetchContacts();
+  }, []);
 
   useEffect(() => {
     if (initialId) {
@@ -127,7 +151,7 @@ export default function RegisterProduct() {
             </button>
             <h1 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Product' : 'Register Product'}</h1>
           </div>
-          <span className="text-xs font-bold bg-gray-100 px-3 py-1 rounded-full text-gray-500">Step {currentStep}/5</span>
+          <span className="text-xs font-bold bg-gray-100 px-3 py-1 rounded-full text-gray-500">Step {currentStep}/3</span>
         </div>
       </div>
 
@@ -176,9 +200,10 @@ export default function RegisterProduct() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Tag ID *</label>
                     <input 
                       type="text" 
+                      readOnly
                       {...register('id')} 
                       placeholder="e.g. 2000829"
-                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.id ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-gray-100 cursor-not-allowed ${errors.id ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.id && <p className="mt-1 text-xs text-red-500">{errors.id.message}</p>}
                     <p className="mt-1 text-[10px] text-gray-400 font-mono">Current scanning URL: scannhelp.com/app/scan?t_id={currentId || '...'}</p>
@@ -201,41 +226,44 @@ export default function RegisterProduct() {
               </div>
             )}
 
-            {/* Step 2: Privacy Settings */}
+            {/* Step 2: Contact Info */}
             {currentStep === 2 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 mb-6">
-                  <h3 className="font-bold text-blue-900 mb-1 text-base">Privacy & Visibility</h3>
-                  <p className="text-xs text-blue-700">Control what others see when they scan your tag.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="pr-4">
-                      <p className="text-sm font-bold text-gray-900">Show Contact Info</p>
-                      <p className="text-xs text-gray-500">Allow finders to see your name and number immediately.</p>
-                    </div>
-                    <input type="checkbox" {...register('display_information')} className="w-6 h-6 accent-primary" />
-                  </label>
-
-                  <label className="flex items-center justify-between p-4 bg-red-50/50 rounded-2xl cursor-pointer hover:bg-red-50 transition-colors border border-red-100">
-                    <div className="pr-4">
-                      <p className="text-sm font-bold text-red-900">Mark as Lost</p>
-                      <p className="text-xs text-red-600">Enable this to show a 'Lost Item' message on the scan page.</p>
-                    </div>
-                    <input type="checkbox" {...register('is_lost')} className="w-6 h-6 accent-red-500" />
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Contact Info */}
-            {currentStep === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="bg-green-50 p-6 rounded-2xl border border-green-100 mb-6">
                   <h3 className="font-bold text-green-900 mb-1 text-base">Your Details</h3>
                   <p className="text-xs text-green-700">Provide the details so the finder can return your item.</p>
                 </div>
+
+                {savedContacts.length > 0 && (
+                  <div className="mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Use Existing Profile</label>
+                    <select
+                      value={selectedContactIndex}
+                      onChange={(e) => {
+                        const idx = parseInt(e.target.value);
+                        setSelectedContactIndex(idx);
+                        if (idx >= 0) {
+                          const contact = savedContacts[idx];
+                          setValue('name', contact.name, { shouldValidate: true });
+                          setValue('mobile', contact.mobile, { shouldValidate: true });
+                          setValue('alt_number', contact.alt_number, { shouldValidate: true });
+                          setValue('address', contact.address, { shouldValidate: true });
+                        } else {
+                          setValue('name', '', { shouldValidate: true });
+                          setValue('mobile', '', { shouldValidate: true });
+                          setValue('alt_number', '', { shouldValidate: true });
+                          setValue('address', '', { shouldValidate: true });
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-primary transition-all bg-gray-50"
+                    >
+                      <option value={-1}>New Member (Enter manually)</option>
+                      {savedContacts.map((c, idx) => (
+                        <option key={idx} value={idx}>{c.name} ({c.mobile})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div>
@@ -275,36 +303,8 @@ export default function RegisterProduct() {
               </div>
             )}
 
-            {/* Step 4: Reward & Notes */}
-            {currentStep === 4 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100 mb-6">
-                  <h3 className="font-bold text-purple-900 mb-1 text-base">Rewards & Instructions</h3>
-                  <p className="text-xs text-purple-700">Add a reward or a custom message for the person who finds your item.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Reward (₹)</label>
-                    <input 
-                      type="text" 
-                      {...register('reward_amount')} 
-                      onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
-                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.reward_amount ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`} 
-                      placeholder="Optional: e.g. 500" 
-                    />
-                    {errors.reward_amount && <p className="mt-1 text-xs text-red-500">{errors.reward_amount.message}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Custom Message for Finder</label>
-                    <textarea {...register('notes')} rows="4" className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-primary resize-none" placeholder="e.g. Please call me anytime after 6 PM. Thank you so much!" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Final Review */}
-            {currentStep === 5 && (
+            {/* Step 3: Final Review */}
+            {currentStep === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="bg-gray-900 p-6 rounded-2xl mb-6 shadow-lg shadow-gray-200">
                   <h3 className="font-bold text-white mb-1 text-base">Final Review</h3>
@@ -328,12 +328,6 @@ export default function RegisterProduct() {
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile</span>
                     <span className="text-sm font-bold text-gray-900">{formData.mobile}</span>
                   </div>
-                  {formData.reward_amount && (
-                    <div className="flex justify-between border-b border-gray-200 pb-3">
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Reward</span>
-                      <span className="text-sm font-bold text-green-600">₹{formData.reward_amount}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="p-4 bg-orange-50 rounded-2xl border border-dashed border-orange-200 flex items-center gap-3">
@@ -356,7 +350,7 @@ export default function RegisterProduct() {
                 </button>
               )}
               
-              {currentStep < 5 ? (
+              {currentStep < 3 ? (
                 <button
                   type="button"
                   onClick={nextStep}

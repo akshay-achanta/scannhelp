@@ -33,7 +33,21 @@ export const api = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Signup failed');
+      let errorMessage = 'Signup failed';
+      if (error && error.detail) {
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail;
+        } else if (Array.isArray(error.detail)) {
+          errorMessage = error.detail.map(err => {
+            let msg = err.msg || '';
+            if (msg.startsWith('Value error, ')) {
+              msg = msg.substring('Value error, '.length);
+            }
+            return msg;
+          }).filter(Boolean).join(', ') || 'Validation error';
+        }
+      }
+      throw new Error(errorMessage);
     }
     return response.json();
   },

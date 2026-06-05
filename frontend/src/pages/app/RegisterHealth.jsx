@@ -203,9 +203,10 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Tag ID *</label>
                     <input 
                       type="text" 
+                      readOnly
                       {...register('id')} 
                       placeholder="e.g. 2000829"
-                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.id ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
+                      className={`w-full px-4 py-3 border rounded-xl outline-none transition-all bg-gray-100 cursor-not-allowed ${errors.id ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.id && <p className="mt-1 text-xs text-red-500">{errors.id.message}</p>}
                     <p className="mt-1 text-[10px] text-gray-400 font-mono">Current scanning URL: scannhelp.com/app/scan?t_id={currentId || '...'}</p>

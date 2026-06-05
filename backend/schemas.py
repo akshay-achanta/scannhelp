@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from typing import Optional, List, Literal
 import datetime
 import re
@@ -18,7 +18,32 @@ class UserBase(BaseModel):
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, max_length=100)
+    password: str = Field(..., min_length=8, max_length=20)
+    confirm_password: str = Field(..., min_length=8, max_length=20)
+
+    @model_validator(mode='after')
+    def validate_passwords(self) -> 'UserCreate':
+        pw = self.password
+        cpw = self.confirm_password
+        
+        if pw != cpw:
+            raise ValueError("Passwords do not match")
+        
+        # Check for allowed characters (alphanumeric and special characters, no emojis/spaces)
+        import string
+        if not all(c in string.ascii_letters + string.digits + string.punctuation for c in pw):
+            raise ValueError("Password can only contain letters, numbers, and special characters")
+        
+        # Must not be only numbers or only letters
+        has_letter = any(c.isalpha() for c in pw)
+        has_digit = any(c.isdigit() for c in pw)
+        
+        if not has_digit:
+            raise ValueError("Password is not strong — it cannot be only letters, please add some numbers")
+        if not has_letter:
+            raise ValueError("Password is not strong — it cannot be only numbers, please add some letters")
+            
+        return self
 
 class UserRead(UserBase):
     id: int

@@ -18,7 +18,10 @@ import RegisterHealth from './pages/app/RegisterHealth';
 import ViewProduct from './pages/app/ViewProduct';
 import ViewHealth from './pages/app/ViewHealth';
 import ScanRedirect from './pages/app/ScanRedirect';
-import PublicDetails from './pages/app/PublicDetails';
+import PublicProduct from './pages/app/PublicProduct';
+import PublicHealth from './pages/app/PublicHealth';
+import Shop from './pages/app/Shop';
+import Subscriptions from './pages/app/Subscriptions';
 
 function App() {
   return (
@@ -36,13 +39,17 @@ function App() {
           <Route path="app/dashboard" element={<Dashboard />} />
           <Route path="app/dashboard/products" element={<Dashboard />} />
           <Route path="app/dashboard/health" element={<Dashboard />} />
+          <Route path="app/dashboard/shop" element={<Dashboard />} />
           <Route path="app/register/product" element={<RegisterProduct />} />
           <Route path="app/register/health" element={<RegisterHealth />} />
           <Route path="app/view/product/:id" element={<ViewProduct />} />
           <Route path="app/view/health/:id" element={<ViewHealth />} />
           <Route path="app/scan" element={<ScanRedirect />} />
           <Route path="app/activate" element={<ScanRedirect />} />
-          <Route path="app/public-details/:id" element={<PublicDetails />} />
+          <Route path="app/public-product/:id" element={<PublicProduct />} />
+          <Route path="app/public-health/:id" element={<PublicHealth />} />
+          <Route path="app/shop" element={<Shop />} />
+          <Route path="app/subscriptions" element={<Subscriptions />} />
           <Route path="not-found" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Route>

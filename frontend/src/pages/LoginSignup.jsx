@@ -10,9 +10,11 @@ export default function LoginSignup() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Determine initial state based on route
   useEffect(() => {
@@ -68,6 +70,35 @@ export default function LoginSignup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    if (!isLogin) {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+      if (password.length < 8 || password.length > 20) {
+        setError('Password must be between 8 and 20 characters');
+        return;
+      }
+      // Alphanumerics and special characters only (no emojis)
+      const isValidChars = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]+$/.test(password);
+      if (!isValidChars) {
+        setError('Password can only contain letters, numbers, and special characters');
+        return;
+      }
+      // Must not be only numbers or only letters
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      if (!hasNumber) {
+        setError('Password is not strong — it cannot be only letters, please add some numbers');
+        return;
+      }
+      if (!hasLetter) {
+        setError('Password is not strong — it cannot be only numbers, please add some letters');
+        return;
+      }
+    }
+
     setLoading(true);
     
     try {
@@ -77,7 +108,7 @@ export default function LoginSignup() {
         sessionStorage.setItem('scannhelp_user', JSON.stringify(userData));
         sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
       } else {
-        await api.signup({ email, full_name: name, password });
+        await api.signup({ email, full_name: name, password, confirm_password: confirmPassword });
         await api.login(email, password);
         const userData = { email, full_name: name };
         sessionStorage.setItem('scannhelp_user', JSON.stringify(userData));
@@ -210,6 +241,32 @@ export default function LoginSignup() {
                   </button>
                 </div>
               </div>
+
+              {!isLogin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {!isLogin && (
                 <div className="flex items-start">
