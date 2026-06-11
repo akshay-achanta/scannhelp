@@ -56,11 +56,7 @@ export default function ScanRedirect() {
             break;
           case 'lost':
             // If marked as LOST -> show public details
-            if (t_t === '2') {
-              navigate(`/app/public-health/${t_id}`, { replace: true });
-            } else {
-              navigate(`/app/public-product/${t_id}`, { replace: true });
-            }
+            navigate(`/app/public-details/${t_id}?t_t=${t_t}`, { replace: true });
             break;
           default:
             navigate('/not-found', { replace: true });

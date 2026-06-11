@@ -20,30 +20,38 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=20)
     confirm_password: str = Field(..., min_length=8, max_length=20)
+    verification_code: str = Field(..., min_length=6, max_length=6)
+    turnstile_token: Optional[str] = None
 
     @model_validator(mode='after')
     def validate_passwords(self) -> 'UserCreate':
         pw = self.password
         cpw = self.confirm_password
-        
+
         if pw != cpw:
             raise ValueError("Passwords do not match")
-        
-        # Check for allowed characters (alphanumeric and special characters, no emojis/spaces)
+
         import string
         if not all(c in string.ascii_letters + string.digits + string.punctuation for c in pw):
             raise ValueError("Password can only contain letters, numbers, and special characters")
-        
-        # Must not be only numbers or only letters
+
         has_letter = any(c.isalpha() for c in pw)
         has_digit = any(c.isdigit() for c in pw)
-        
+
         if not has_digit:
             raise ValueError("Password is not strong — it cannot be only letters, please add some numbers")
         if not has_letter:
             raise ValueError("Password is not strong — it cannot be only numbers, please add some letters")
-            
+
         return self
+
+class SignupCodeRequest(BaseModel):
+    email: EmailStr
+
+class LoginJsonRequest(BaseModel):
+    email: EmailStr
+    password: str
+    turnstile_token: Optional[str] = None
 
 class UserRead(UserBase):
     id: int
@@ -213,3 +221,41 @@ class TagActivateRequest(BaseModel):
     t_id: str
     t_t: int
     details: dict
+
+# --- Password Reset ---
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8, max_length=20)
+    confirm_password: str = Field(..., min_length=8, max_length=20)
+
+    @model_validator(mode='after')
+    def validate_passwords(self) -> 'ResetPasswordRequest':
+        pw = self.new_password
+        cpw = self.confirm_password
+        
+        if pw != cpw:
+            raise ValueError("Passwords do not match")
+        
+        # Check for allowed characters
+        import string
+        if not all(c in string.ascii_letters + string.digits + string.punctuation for c in pw):
+            raise ValueError("Password can only contain letters, numbers, and special characters")
+        
+        has_letter = any(c.isalpha() for c in pw)
+        has_digit = any(c.isdigit() for c in pw)
+        
+        if not has_digit:
+            raise ValueError("Password is not strong — it cannot be only letters, please add some numbers")
+        if not has_letter:
+            raise ValueError("Password is not strong — it cannot be only numbers, please add some letters")
+            
+        return self

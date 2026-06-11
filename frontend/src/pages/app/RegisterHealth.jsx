@@ -106,6 +106,8 @@ export default function RegisterHealth() {
   }, [initialId, reset]);
 
   const onSubmit = async (data) => {
+    if (currentStep !== 5) return;
+
     setLoading(true);
     try {
       const { id: formId, ...rest } = data;
@@ -149,7 +151,11 @@ export default function RegisterHealth() {
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <button onClick={() => navigate('/app/dashboard')} className="p-2 hover:bg-gray-100 rounded-full mr-4 transition-colors">
+            <button
+              type="button"
+              onClick={() => currentStep > 1 ? prevStep() : navigate('/app/dashboard')}
+              className="p-2 hover:bg-gray-100 rounded-full mr-4 transition-colors"
+            >
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </button>
             <h1 className="text-lg font-bold text-gray-900">{isEdit ? 'Edit Health Profile' : 'New Health Profile'}</h1>
@@ -188,7 +194,10 @@ export default function RegisterHealth() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl shadow-blue-200/20 border border-gray-100 overflow-hidden">
-          <form onSubmit={handleSubmit(onSubmit)} className="p-8">
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="p-8"
+          >
             
             {/* Step 1: Basics */}
             {currentStep === 1 && (
@@ -241,15 +250,32 @@ export default function RegisterHealth() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Existing Health Issues</label>
-                    <textarea {...register('existing_health_issues')} rows="2" className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500 resize-none" placeholder="e.g. Diabetes, Asthma, Heart Condition..." />
+                    <textarea
+                      {...register('existing_health_issues')}
+                      rows="2"
+                      onKeyPress={(e) => !/[a-zA-Z\s,.\-\/()]/.test(e.key) && e.preventDefault()}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500 resize-none"
+                      placeholder="e.g. Diabetes, Asthma, Heart Condition..."
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Allergies</label>
-                    <input {...register('allergies')} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500" placeholder="e.g. Peanuts, Penicillin..." />
+                    <input
+                      {...register('allergies')}
+                      onKeyPress={(e) => !/[a-zA-Z\s,.\-\/()]/.test(e.key) && e.preventDefault()}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500"
+                      placeholder="e.g. Peanuts, Penicillin..."
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Current Medications</label>
-                    <textarea {...register('existing_medicines')} rows="2" className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500 resize-none" placeholder="List any daily medicines..." />
+                    <textarea
+                      {...register('existing_medicines')}
+                      rows="2"
+                      onKeyPress={(e) => !/[a-zA-Z\s,.\-\/()]/.test(e.key) && e.preventDefault()}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500 resize-none"
+                      placeholder="List any daily medicines..."
+                    />
                   </div>
                   <label className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors">
                     <div>
@@ -364,6 +390,30 @@ export default function RegisterHealth() {
                       <span className="text-sm font-bold text-orange-600">{formData.allergies}</span>
                     </div>
                   )}
+                  {formData.existing_health_issues && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Health Issues</span>
+                      <span className="text-sm font-bold text-gray-700 text-right max-w-[60%]">{formData.existing_health_issues}</span>
+                    </div>
+                  )}
+                  {formData.existing_medicines && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Medications</span>
+                      <span className="text-sm font-bold text-gray-700 text-right max-w-[60%]">{formData.existing_medicines}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-b border-gray-200 pb-3">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Physically Disabled</span>
+                    <span className={`text-sm font-bold ${formData.physically_disabled ? 'text-orange-600' : 'text-gray-500'}`}>
+                      {formData.physically_disabled ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pb-1">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Display Info</span>
+                    <span className={`text-sm font-bold ${formData.display_information ? 'text-green-600' : 'text-gray-500'}`}>
+                      {formData.display_information ? 'Public' : 'Private'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-4 bg-blue-50 rounded-2xl border border-dashed border-blue-200 flex items-center gap-3">
@@ -397,8 +447,9 @@ export default function RegisterHealth() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
                   disabled={loading}
+                  onClick={() => handleSubmit(onSubmit)()}
                   className="flex-[2] py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}

@@ -20,8 +20,10 @@ import ViewHealth from './pages/app/ViewHealth';
 import ScanRedirect from './pages/app/ScanRedirect';
 import PublicProduct from './pages/app/PublicProduct';
 import PublicHealth from './pages/app/PublicHealth';
+import PublicDetails from './pages/app/PublicDetails';
 import Shop from './pages/app/Shop';
 import Subscriptions from './pages/app/Subscriptions';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -31,6 +33,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="login" element={<LoginSignup />} />
           <Route path="signup" element={<LoginSignup />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="terms-conditions" element={<TermsConditions />} />
           <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="returns-refund" element={<ReturnsRefund />} />
@@ -46,6 +49,7 @@ function App() {
           <Route path="app/view/health/:id" element={<ViewHealth />} />
           <Route path="app/scan" element={<ScanRedirect />} />
           <Route path="app/activate" element={<ScanRedirect />} />
+          <Route path="app/public-details/:id" element={<PublicDetails />} />
           <Route path="app/public-product/:id" element={<PublicProduct />} />
           <Route path="app/public-health/:id" element={<PublicHealth />} />
           <Route path="app/shop" element={<Shop />} />

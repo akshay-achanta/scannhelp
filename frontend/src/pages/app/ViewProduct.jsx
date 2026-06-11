@@ -96,7 +96,7 @@ export default function ViewProduct() {
     );
   }
 
-  const scanUrl = `https://scannhelp.com/app/scan?t_t=1&t_id=${id}`;
+  const scanUrl = `${window.location.origin}/app/scan?t_t=1&t_id=${id}`;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -267,11 +267,11 @@ export default function ViewProduct() {
                       </div>
                       <div className="flex-1">
                         <p className="font-bold text-gray-900 flex items-center gap-2">
-                          <Eye className="h-4 w-4 text-gray-400" />
-                          Show Contact Info
+                          {wizardData.display_information ? <Eye className="h-4 w-4 text-gray-400" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
+                          {wizardData.display_information ? 'Showing Contact Info' : 'Hidden Contact Info'}
                         </p>
                         <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                          Allow finder to see your name and mobile number. Recommended for faster recovery.
+                          {wizardData.display_information ? 'Finder can see your name and mobile number. Recommended for faster recovery.' : 'Finder will not see your personal details. Contact will be hidden.'}
                         </p>
                       </div>
                     </div>

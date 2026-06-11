@@ -48,10 +48,10 @@ export default function ViewHealth() {
       const updatedStatus = !record.display_information;
       const updatedRecord = await api.updateHealthProfile(id, { display_information: updatedStatus });
       setRecord({
-          ...updatedRecord,
-          mobile: updatedRecord.emergency_phone,
-          existing_health_issues: updatedRecord.conditions,
-          existing_medicines: updatedRecord.medications
+        ...updatedRecord,
+        mobile: updatedRecord.emergency_phone,
+        existing_health_issues: updatedRecord.conditions,
+        existing_medicines: updatedRecord.medications
       });
       toast.success(`Profile marked as ${updatedStatus ? 'VISIBLE TO PUBLIC' : 'PRIVATE'}`);
     } catch (err) {
@@ -78,7 +78,7 @@ export default function ViewHealth() {
     );
   }
 
-  const scanUrl = `https://scannhelp.com/app/scan?t_t=2&t_id=${id}`;
+  const scanUrl = `${window.location.origin}/app/scan?t_t=2&t_id=${id}`;
   const isHidden = !record.display_information;
 
   return (
@@ -91,7 +91,7 @@ export default function ViewHealth() {
             </button>
             <h1 className="text-xl font-bold text-gray-900">Health Profile</h1>
           </div>
-          <button 
+          <button
             onClick={() => navigate(`/app/register/health?id=${id}`)}
             className="p-2 hover:bg-gray-100 rounded-full text-primary transition-colors"
           >
@@ -104,7 +104,7 @@ export default function ViewHealth() {
         {/* QR Section */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center">
           <div className="inline-block p-4 bg-white rounded-2xl shadow-xl mb-6">
-            <QRCodeCanvas 
+            <QRCodeCanvas
               id="health-qr"
               value={scanUrl}
               size={200}
@@ -114,39 +114,46 @@ export default function ViewHealth() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-1">{record.name}</h2>
           <p className="text-sm text-gray-500 mb-6 font-mono">Profile ID: {id}</p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+            <button
               onClick={downloadQR}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
             >
               <Download className="h-5 w-5" /> Download QR
             </button>
-            <button 
+            <button
               onClick={toggleVisibilityStatus}
-              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
-                record.display_information 
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${record.display_information
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
                   : 'bg-green-100 text-green-700 hover:bg-green-200'
-              }`}
+                }`}
             >
-              <ShieldCheck className="h-5 w-5" /> {record.display_information ? 'Disable Public View' : 'Visible to Public'}
+              <ShieldCheck className="h-5 w-5" /> {record.display_information ? 'Disable Public View' : 'Enable Public View'}
             </button>
           </div>
         </div>
 
-        {/* Security Alert if hidden */}
-        {isHidden && (
+        {/* Privacy status banner — just informs the owner, does not hide their own data */}
+        {isHidden ? (
           <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-start gap-3">
             <ShieldCheck className="h-5 w-5 text-orange-600 mt-0.5" />
             <div>
               <p className="text-sm font-bold text-orange-800">Privacy Enabled</p>
-              <p className="text-xs text-orange-700">Sensitive medical details are currently hidden from public scans.</p>
+              <p className="text-xs text-orange-700">Public scanners cannot see your medical details. Only you can see this.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
+            <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-green-800">Public View Enabled</p>
+              <p className="text-xs text-green-700">Your medical details are visible to anyone who scans your QR code.</p>
             </div>
           </div>
         )}
 
-        {/* Info Cards */}
+        {/* Info Cards — always visible to the owner */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
@@ -155,7 +162,7 @@ export default function ViewHealth() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Blood Group</p>
-                <p className="text-lg font-bold text-red-600">{isHidden ? '••••' : record.blood_group}</p>
+                <p className="text-lg font-bold text-red-600">{record.blood_group}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Health Issues</p>
@@ -179,7 +186,7 @@ export default function ViewHealth() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Primary Doctor</p>
-                <p className="text-sm font-bold text-gray-900">{isHidden ? '••••••••••' : (record.primary_doctor_number || 'N/A')}</p>
+                <p className="text-sm font-bold text-gray-900">{record.primary_doctor_number || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Address</p>
@@ -195,7 +202,7 @@ export default function ViewHealth() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Medicines</p>
-                <p className="text-sm text-gray-900">{isHidden ? 'Hidden for privacy' : (record.existing_medicines || 'None reported')}</p>
+                <p className="text-sm text-gray-900">{record.existing_medicines || 'None reported'}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Other Notes</p>

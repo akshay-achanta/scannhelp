@@ -175,7 +175,7 @@ function QRGeneratorModal({ plan, onClose }) {
     toast.success('QR Code downloaded!');
   };
 
-  const qrUrl = `https://scannhelp.com/app/scan?t_t=1&t_id=${tagId}`;
+  const qrUrl = `${window.location.origin}/app/scan?t_t=1&t_id=${tagId}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
@@ -201,7 +201,7 @@ function QRGeneratorModal({ plan, onClose }) {
               className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 transition-all bg-gray-50 focus:bg-white"
             />
             <p className="text-[10px] text-gray-400 mt-1 font-mono">
-              URL: scannhelp.com/app/scan?t_id={tagId || '...'}
+              URL: {window.location.host}/app/scan?t_id={tagId || '...'}
             </p>
           </div>
 

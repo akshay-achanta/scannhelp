@@ -52,6 +52,21 @@ export const api = {
     return response.json();
   },
 
+  async sendSignupCode(email) {
+    const response = await fetch(`${API_URL}/signup/send-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      const err = new Error(error.detail || 'Failed to send verification code');
+      err.status = response.status;
+      throw err;
+    }
+    return response.json();
+  },
+
   async login(email, password) {
     const formData = new URLSearchParams();
     formData.append('username', email);
@@ -66,6 +81,36 @@ export const api = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.detail || 'Login failed');
+    }
+
+    const data = await response.json();
+    sessionStorage.setItem('scannhelp_token', data.access_token);
+    sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
+    return data;
+  },
+
+  /**
+   * JSON login with smart CAPTCHA support.
+   * Returns: { access_token, token_type } on success.
+   * Throws: error with .captchaRequired=true when server demands CAPTCHA.
+   */
+  async loginJson(email, password, turnstile_token = null) {
+    const response = await fetch(`${API_URL}/login/json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, turnstile_token }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      const captchaRequired = response.headers.get('X-Captcha-Required') === 'true'
+        || response.status === 428;
+      const attemptsRemaining = parseInt(response.headers.get('X-Attempts-Remaining') || '-1', 10);
+      const err = new Error(error.detail || 'Login failed');
+      err.status = response.status;
+      err.captchaRequired = captchaRequired;
+      err.attemptsRemaining = attemptsRemaining;
+      throw err;
     }
 
     const data = await response.json();
@@ -203,6 +248,60 @@ export const api = {
     if (!response.ok) {
       if (response.status === 404) throw new Error('NOT_FOUND');
       throw new Error('Failed to fetch details');
+    }
+    return response.json();
+  },
+
+  // Password Reset
+  async forgotPassword(email) {
+    const response = await fetch(`${API_URL}/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      const err = new Error(error.detail || 'Failed to send reset code');
+      err.status = response.status;
+      throw err;
+    }
+    return response.json();
+  },
+
+  async verifyResetCode(email, code) {
+    const response = await fetch(`${API_URL}/verify-reset-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Invalid or expired code');
+    }
+    return response.json();
+  },
+
+  async resetPassword(email, code, new_password, confirm_password) {
+    const response = await fetch(`${API_URL}/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, new_password, confirm_password }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      let errorMessage = 'Failed to reset password';
+      if (error && error.detail) {
+        if (typeof error.detail === 'string') {
+          errorMessage = error.detail;
+        } else if (Array.isArray(error.detail)) {
+          errorMessage = error.detail.map(err => {
+            let msg = err.msg || '';
+            if (msg.startsWith('Value error, ')) msg = msg.substring('Value error, '.length);
+            return msg;
+          }).filter(Boolean).join(', ') || 'Validation error';
+        }
+      }
+      throw new Error(errorMessage);
     }
     return response.json();
   },

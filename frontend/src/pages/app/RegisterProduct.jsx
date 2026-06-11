@@ -122,6 +122,8 @@ export default function RegisterProduct() {
   }, [initialId, reset]);
 
   const onSubmit = async (data) => {
+    if (currentStep !== 3) return;
+    
     setLoading(true);
     try {
       const { id: formId, ...rest } = data;
@@ -185,7 +187,10 @@ export default function RegisterProduct() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-          <form onSubmit={handleSubmit(onSubmit)} className="p-8">
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="p-8"
+          >
             
             {/* Step 1: Item Details */}
             {currentStep === 1 && (
@@ -361,8 +366,9 @@ export default function RegisterProduct() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
                   disabled={loading}
+                  onClick={() => handleSubmit(onSubmit)()}
                   className="flex-[2] py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}

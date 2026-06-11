@@ -12,6 +12,10 @@ class User(Base):
     full_name = Column(String)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    reset_code = Column(String, nullable=True)
+    reset_code_expires = Column(DateTime, nullable=True)
+    reset_attempts = Column(Integer, default=0, nullable=True)
+    reset_rate_limit_until = Column(DateTime, nullable=True)
 
     products = relationship("Product", back_populates="owner")
     health_profiles = relationship("HealthProfile", back_populates="owner")
@@ -62,3 +66,12 @@ class HealthProfile(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     owner = relationship("User", back_populates="health_profiles")
+
+class SignupOTP(Base):
+    __tablename__ = "signup_otps"
+
+    email = Column(String, primary_key=True, index=True)
+    code = Column(String, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    attempts = Column(Integer, default=0)
+    rate_limit_until = Column(DateTime, nullable=True)
