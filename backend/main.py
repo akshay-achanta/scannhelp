@@ -16,13 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY", "")
 
-# ── Login attempt tracker for smart CAPTCHA (in-memory) ──────────────────────
-# Structure: { email_lower: {"count": int, "first_at": datetime} }
-login_attempt_tracker: dict = {}
-LOGIN_MAX_ATTEMPTS_BEFORE_CAPTCHA = 3
-LOGIN_ATTEMPT_WINDOW_SECONDS = 600  # 10 minutes
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -87,29 +81,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 # --- Auth Endpoints ---
 
-# ── Turnstile verification helper ────────────────────────────────────────────
-async def verify_turnstile(token: Optional[str], remote_ip: Optional[str] = None) -> bool:
-    """Verify a Cloudflare Turnstile token. Returns True on success."""
-    if not TURNSTILE_SECRET_KEY:
-        # No secret key configured — skip verification in dev
-        return True
-    if not token:
-        return False
-    payload = {"secret": TURNSTILE_SECRET_KEY, "response": token}
-    if remote_ip:
-        payload["remoteip"] = remote_ip
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-                data=payload,
-                timeout=10,
-            )
-        data = resp.json()
-        return bool(data.get("success"))
-    except Exception as e:
-        print(f"ERROR: Turnstile verification failed: {e}")
-        return False
+
 
 # ── Signup: Send verification code ───────────────────────────────────────────
 @app.post("/signup/send-code")
@@ -169,14 +141,8 @@ async def signup_send_code(req: schemas.SignupCodeRequest, db: Session = Depends
 
 # ── Signup: Create account ────────────────────────────────────────────────────
 @app.post("/signup", response_model=schemas.UserRead)
-async def signup(user: schemas.UserCreate, request: Request, db: Session = Depends(get_db)):
+async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     email_lower = user.email.lower().strip()
-
-    # Verify Turnstile token if provided
-    if user.turnstile_token:
-        remote_ip = request.client.host if request.client else None
-        if not await verify_turnstile(user.turnstile_token, remote_ip):
-            raise HTTPException(status_code=400, detail="CAPTCHA verification failed. Please try again.")
 
     db_user = db.query(models.User).filter(models.User.email == email_lower).first()
     if db_user:
@@ -217,53 +183,18 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 @app.post("/login/json", response_model=schemas.Token)
-async def login_json(req: schemas.LoginJsonRequest, request: Request, db: Session = Depends(get_db)):
-    """JSON login endpoint with smart Turnstile CAPTCHA support."""
+async def login_json(req: schemas.LoginJsonRequest, db: Session = Depends(get_db)):
+    """JSON login endpoint."""
     email_lower = req.email.lower().strip()
-    now = datetime.utcnow()
-
-    # ── Track login attempts for smart CAPTCHA ────────────────────────────
-    tracker = login_attempt_tracker.get(email_lower)
-    if tracker:
-        age_seconds = (now - tracker["first_at"]).total_seconds()
-        if age_seconds > LOGIN_ATTEMPT_WINDOW_SECONDS:
-            # Window expired — reset
-            login_attempt_tracker.pop(email_lower, None)
-            tracker = None
-
-    attempt_count = (tracker["count"] if tracker else 0) + 1
-    captcha_required = attempt_count > LOGIN_MAX_ATTEMPTS_BEFORE_CAPTCHA
-
-    # ── Verify Turnstile when required ────────────────────────────────────
-    if captcha_required:
-        if not req.turnstile_token:
-            raise HTTPException(
-                status_code=428,
-                detail="CAPTCHA required. Please complete the security check."
-            )
-        remote_ip = request.client.host if request.client else None
-        if not await verify_turnstile(req.turnstile_token, remote_ip):
-            raise HTTPException(status_code=400, detail="CAPTCHA verification failed. Please try again.")
 
     # ── Authenticate ──────────────────────────────────────────────────────
     user = db.query(models.User).filter(models.User.email == email_lower).first()
     if not user or not auth.verify_password(req.password, user.hashed_password):
-        # Record failed attempt
-        if tracker and (now - tracker["first_at"]).total_seconds() <= LOGIN_ATTEMPT_WINDOW_SECONDS:
-            login_attempt_tracker[email_lower] = {"count": attempt_count, "first_at": tracker["first_at"]}
-        else:
-            login_attempt_tracker[email_lower] = {"count": 1, "first_at": now}
-
-        remaining_before_captcha = max(0, LOGIN_MAX_ATTEMPTS_BEFORE_CAPTCHA - attempt_count)
         raise HTTPException(
             status_code=401,
-            detail="Incorrect email or password",
-            headers={"X-Captcha-Required": "true" if captcha_required else "false",
-                     "X-Attempts-Remaining": str(remaining_before_captcha)}
+            detail="Incorrect email or password"
         )
 
-    # Success — clear tracker
-    login_attempt_tracker.pop(email_lower, None)
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 

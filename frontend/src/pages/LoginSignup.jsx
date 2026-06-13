@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle,
@@ -6,19 +6,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
 
-// ── Turnstile script loader (once per page) ──────────────────────────────────
-let turnstileScriptLoaded = false;
-function loadTurnstileScript(onLoad) {
-  if (turnstileScriptLoaded) { onLoad?.(); return; }
-  const script = document.createElement('script');
-  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-  script.async = true;
-  script.defer = true;
-  script.onload = () => { turnstileScriptLoaded = true; onLoad?.(); };
-  document.head.appendChild(script);
-}
 
 // ── OTP Countdown Timer ───────────────────────────────────────────────────────
 function OTPCountdown({ seconds, onExpire }) {
@@ -59,6 +47,33 @@ export default function LoginSignup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+
+  const DRAFT_KEY = 'scannhelp_auth_draft';
+
+  // Load draft from local storage on mount
+  useEffect(() => {
+    try {
+      const draft = localStorage.getItem(DRAFT_KEY);
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.name) setName(parsed.name);
+        if (parsed.password) setPassword(parsed.password);
+        if (parsed.confirmPassword) setConfirmPassword(parsed.confirmPassword);
+      }
+    } catch (e) {
+      console.error('Failed to load draft', e);
+    }
+  }, []);
+
+  // Save draft to local storage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ email, name, password, confirmPassword }));
+    } catch (e) {
+      console.error('Failed to save draft', e);
+    }
+  }, [email, name, password, confirmPassword]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -73,13 +88,7 @@ export default function LoginSignup() {
   const [codeSendMsg, setCodeSendMsg] = useState('');
   const [codeSendWarning, setCodeSendWarning] = useState('');
 
-  // ── CAPTCHA state ──────────────────────────────────────────────────────────
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [captchaRequired, setCaptchaRequired] = useState(false);
-  const [captchaReady, setCaptchaReady] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
-  const captchaContainerRef = useRef(null);
-  const turnstileWidgetId = useRef(null);
+
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const resetOtpState = useCallback(() => {
@@ -91,55 +100,8 @@ export default function LoginSignup() {
     setCodeSendWarning('');
   }, []);
 
-  const resetCaptcha = useCallback(() => {
-    setTurnstileToken('');
-    setCaptchaReady(false);
-    if (turnstileWidgetId.current != null && window.turnstile) {
-      try { window.turnstile.remove(turnstileWidgetId.current); } catch {}
-      turnstileWidgetId.current = null;
-    }
-  }, []);
 
-  const renderCaptcha = useCallback(() => {
-    if (!captchaContainerRef.current || !window.turnstile) return;
-    // Destroy existing widget first
-    if (turnstileWidgetId.current != null) {
-      try { window.turnstile.remove(turnstileWidgetId.current); } catch {}
-      turnstileWidgetId.current = null;
-    }
-    turnstileWidgetId.current = window.turnstile.render(captchaContainerRef.current, {
-      sitekey: TURNSTILE_SITE_KEY,
-      theme: 'light',
-      callback: (token) => setTurnstileToken(token),
-      'expired-callback': () => setTurnstileToken(''),
-      'error-callback': () => setTurnstileToken(''),
-    });
-  }, []);
 
-  // ── Effect 1: Load Turnstile script when CAPTCHA is first required ──────────
-  useEffect(() => {
-    if (!captchaRequired) return;
-    if (window.turnstile) {
-      setCaptchaReady(true);
-    } else {
-      loadTurnstileScript(() => setCaptchaReady(true));
-    }
-  }, [captchaRequired]);
-
-  // ── Effect 2: Render the widget once captchaReady AND container is in DOM ───
-  useEffect(() => {
-    if (!captchaReady) return;
-    
-    // Poll until both window.turnstile and the container ref are available
-    const intervalId = setInterval(() => {
-      if (window.turnstile && captchaContainerRef.current) {
-        renderCaptcha();
-        clearInterval(intervalId);
-      }
-    }, 100);
-    
-    return () => clearInterval(intervalId);
-  }, [captchaReady, renderCaptcha]);
 
   // ── Route detection ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -232,23 +194,12 @@ export default function LoginSignup() {
       if (!isValidChars) { setError('Password can only contain letters, numbers, and special characters'); return; }
       if (!/[a-zA-Z]/.test(password)) { setError('Password is not strong — please add some letters'); return; }
       if (!/[0-9]/.test(password)) { setError('Password is not strong — please add some numbers'); return; }
-
-      // If CAPTCHA is required but not solved
-      if (captchaRequired && !turnstileToken) {
-        setError('Please complete the CAPTCHA verification.'); return;
-      }
-    } else {
-      // Login: check CAPTCHA
-      if (captchaRequired && !turnstileToken) {
-        setError('Please complete the CAPTCHA verification.'); return;
-      }
     }
 
     setLoading(true);
     try {
       if (isLogin) {
-        // Use JSON login with CAPTCHA support
-        await api.loginJson(email, password, captchaRequired ? turnstileToken : null);
+        await api.loginJson(email, password);
         const userData = { email };
         sessionStorage.setItem('scannhelp_user', JSON.stringify(userData));
         sessionStorage.setItem('scannhelp_token_expires_at', (Date.now() + 30 * 60 * 1000).toString());
@@ -259,7 +210,6 @@ export default function LoginSignup() {
           password,
           confirm_password: confirmPassword,
           verification_code: verificationCode,
-          turnstile_token: turnstileToken || null,
         });
         await api.loginJson(email, password);
         const userData = { email, full_name: name };
@@ -268,24 +218,10 @@ export default function LoginSignup() {
       }
 
       const redirect = new URLSearchParams(location.search).get('redirect');
+      localStorage.removeItem(DRAFT_KEY);
       navigate(redirect || '/app/dashboard', { replace: true });
     } catch (err) {
-      const newAttempts = loginAttempts + 1;
-      setLoginAttempts(newAttempts);
-
-      // Show CAPTCHA after 3 failed login attempts OR if server explicitly requires it
-      if (isLogin && (err.captchaRequired || err.status === 428 || newAttempts >= 3)) {
-        setCaptchaRequired(true);
-        resetCaptcha();
-        // If the server demanded CAPTCHA and widget is now showing, don't show the raw error
-        if (err.status === 428) {
-          setError('Too many failed attempts. Please complete the security check below.');
-        } else {
-          setError(err.message || 'An error occurred during authentication');
-        }
-      } else {
-        setError(err.message || 'An error occurred during authentication');
-      }
+      setError(err.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
@@ -296,7 +232,6 @@ export default function LoginSignup() {
     setIsLogin(toLogin);
     setError('');
     resetOtpState();
-    // Don't reset CAPTCHA when switching — it persists for security
   };
 
   const otpSecondsTotal = 5 * 60; // 5 minutes
@@ -561,39 +496,13 @@ export default function LoginSignup() {
                 </div>
               )}
 
-              {/* ── CAPTCHA Widget (shown when suspicious activity detected) ── */}
-              {captchaRequired && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheck className="h-4 w-4 text-amber-600" />
-                    <p className="text-xs font-semibold text-amber-700">
-                      Security check required
-                    </p>
-                    <span className="text-xs text-amber-600 ml-auto">
-                      {isLogin ? 'Too many failed attempts' : 'Verification needed'}
-                    </span>
-                  </div>
-                  {!captchaReady ? (
-                    <div className="flex items-center justify-center py-4 gap-2 text-xs text-amber-600">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Loading security widget...
-                    </div>
-                  ) : (
-                    <div ref={captchaContainerRef} id="turnstile-widget" />
-                  )}
-                  {turnstileToken && (
-                    <p className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
-                    </p>
-                  )}
-                </div>
-              )}
+
 
               {/* Submit Button */}
               <button
                 id={isLogin ? 'login-submit' : 'signup-submit'}
                 type="submit"
-                disabled={loading || (captchaRequired && !turnstileToken)}
+                disabled={loading}
                 className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}

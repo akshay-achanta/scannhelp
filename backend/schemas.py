@@ -21,7 +21,6 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=20)
     confirm_password: str = Field(..., min_length=8, max_length=20)
     verification_code: str = Field(..., min_length=6, max_length=6)
-    turnstile_token: Optional[str] = None
 
     @model_validator(mode='after')
     def validate_passwords(self) -> 'UserCreate':
@@ -51,7 +50,6 @@ class SignupCodeRequest(BaseModel):
 class LoginJsonRequest(BaseModel):
     email: EmailStr
     password: str
-    turnstile_token: Optional[str] = None
 
 class UserRead(UserBase):
     id: int

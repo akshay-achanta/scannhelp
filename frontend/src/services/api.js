@@ -90,26 +90,20 @@ export const api = {
   },
 
   /**
-   * JSON login with smart CAPTCHA support.
+   * JSON login.
    * Returns: { access_token, token_type } on success.
-   * Throws: error with .captchaRequired=true when server demands CAPTCHA.
    */
-  async loginJson(email, password, turnstile_token = null) {
+  async loginJson(email, password) {
     const response = await fetch(`${API_URL}/login/json`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, turnstile_token }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      const captchaRequired = response.headers.get('X-Captcha-Required') === 'true'
-        || response.status === 428;
-      const attemptsRemaining = parseInt(response.headers.get('X-Attempts-Remaining') || '-1', 10);
       const err = new Error(error.detail || 'Login failed');
       err.status = response.status;
-      err.captchaRequired = captchaRequired;
-      err.attemptsRemaining = attemptsRemaining;
       throw err;
     }
 
