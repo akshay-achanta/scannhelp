@@ -472,13 +472,20 @@ def _send_email(to_email: str, subject: str, html: str):
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html"))
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+        if SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+                server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                server.starttls()
+                server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
         print(f"INFO: Email sent to {to_email} | Subject: {subject}")
     except Exception as e:
         print(f"ERROR: Failed to send email to {to_email}: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Email service error: {str(e)}")
 
 def send_verification_email(to_email: str, code: str):
     """Send signup verification code via Gmail SMTP."""
