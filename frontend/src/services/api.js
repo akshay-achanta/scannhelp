@@ -1,5 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_URL = BASE_URL.replace(/\/$/, '');
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = BASE_URL ? BASE_URL.replace(/\/$/, '') : '';
 
 const getHeaders = () => {
   const token = sessionStorage.getItem('scannhelp_token');

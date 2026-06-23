@@ -23,26 +23,11 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ScanNHelp API")
 
-# ✅ CORS MUST be added before any routes
-allowed_origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "https://accurate-vision-production-48a0.up.railway.app",
-    "https://scannhelp-production.up.railway.app",
-    "https://scannhelp.vercel.app",
-    "https://scannhelp.com",
-    "https://www.scannhelp.com",
-    "http://10.189.80.42:5173",
-    "http://10.189.80.42.nip.io:5173",
-    "http://172.20.113.185:5173",
-    "http://172.20.113.185.nip.io:5173"
-]
-
-env_origins = os.getenv("ALLOWED_ORIGINS", "")
-if env_origins:
-    extra_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip()]
-    allowed_origins.extend(extra_origins)
+# ✅ Dynamic CORS configuration for production
+env_origins = os.getenv("ALLOWED_ORIGINS", "*")
+allowed_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip()]
+if not allowed_origins:
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -465,9 +450,7 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 
 def _send_email(to_email: str, subject: str, html: str):
-    """Generic email send helper via Resend API."""
-    resend_api_key = os.getenv("RESEND_API_KEY", "re_ZVHytbDr_F3RSn5fo991rtks6TFwQ13PS")
-    
+    resend_api_key = os.getenv("RESEND_API_KEY", "")
     url = "https://api.resend.com/emails"
     headers = {
         "Authorization": f"Bearer {resend_api_key}",
