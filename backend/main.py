@@ -24,10 +24,10 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ScanNHelp API")
 
 # ✅ Dynamic CORS configuration for production
-env_origins = os.getenv("ALLOWED_ORIGINS", "*")
+env_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,https://scannhelp.com,https://www.scannhelp.com")
 allowed_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip()]
 if not allowed_origins:
-    allowed_origins = ["*"]
+    allowed_origins = ["http://localhost:3000", "http://localhost:5173", "https://scannhelp.com", "https://www.scannhelp.com"]
 
 app.add_middleware(
     CORSMiddleware,
