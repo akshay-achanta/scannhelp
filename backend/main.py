@@ -24,10 +24,12 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ScanNHelp API")
 
 # ✅ Dynamic CORS configuration for production
-env_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,https://scannhelp.com,https://www.scannhelp.com")
-allowed_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip()]
-if not allowed_origins:
-    allowed_origins = ["http://localhost:3000", "http://localhost:5173", "https://scannhelp.com", "https://www.scannhelp.com"]
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip() and o.strip() != "*"]
+must_have = ["http://localhost:3000", "http://localhost:5173", "https://scannhelp.com", "https://www.scannhelp.com"]
+for origin in must_have:
+    if origin not in allowed_origins:
+        allowed_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
@@ -208,6 +210,9 @@ def google_auth(data: schemas.GoogleLogin, db: Session = Depends(get_db)):
 
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid Google token")
+    except Exception as e:
+        print(f"Google auth error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during Google auth")
 
 # --- Product Endpoints ---
 
