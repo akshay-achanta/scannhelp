@@ -70,7 +70,25 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 # --- Auth Endpoints ---
 
-
+@app.get("/migrate-db")
+def run_migrations(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    results = []
+    queries = [
+        "ALTER TABLE users ADD COLUMN reset_code VARCHAR",
+        "ALTER TABLE users ADD COLUMN reset_code_expires TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN reset_attempts INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN reset_rate_limit_until TIMESTAMP"
+    ]
+    for q in queries:
+        try:
+            db.execute(text(q))
+            db.commit()
+            results.append(f"Success: {q}")
+        except Exception as e:
+            db.rollback()
+            results.append(f"Skipped/Failed: {q} - {str(e)}")
+    return {"results": results}
 
 # ── Signup: Send verification code ───────────────────────────────────────────
 @app.post("/signup/send-code")
