@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -211,8 +213,9 @@ def google_auth(data: schemas.GoogleLogin, db: Session = Depends(get_db)):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid Google token")
     except Exception as e:
-        print(f"Google auth error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error during Google auth")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error during Google auth: {str(e)}")
 
 # --- Product Endpoints ---
 
