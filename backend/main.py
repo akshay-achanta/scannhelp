@@ -476,36 +476,27 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 
 def _send_email(to_email: str, subject: str, html: str):
-    resend_api_key = os.getenv("RESEND_API_KEY", "")
-    url = "https://api.resend.com/emails"
-    headers = {
-        "Authorization": f"Bearer {resend_api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    # Resend requires you to use onboarding@resend.dev until you verify your own domain (like scannhelp.com).
-    from_email = os.getenv("RESEND_FROM_EMAIL", "ScanNHelp <onboarding@resend.dev>")
-    
-    payload = {
-        "from": from_email,
-        "to": [to_email],
-        "subject": subject,
-        "html": html
-    }
-    
+    """Send email via Gmail SMTP (TLS on port 587)."""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"ScanNHelp <{SMTP_EMAIL}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html, "html"))
+
     try:
-        # httpx is already imported at the top of main.py
-        response = httpx.post(url, headers=headers, json=payload, timeout=10.0)
-        response.raise_for_status()
-        print(f"INFO: Email sent to {to_email} | Subject: {subject} | Resend ID: {response.json().get('id', 'N/A')}")
-    except httpx.HTTPStatusError as e:
-        print(f"ERROR: Failed to send email to {to_email}: {e.response.text}")
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=f"Email service error: {e.response.text}")
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(SMTP_EMAIL, SMTP_PASSWORD)
+            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+        print(f"INFO: Email sent to {to_email} | Subject: {subject}")
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"ERROR: SMTP authentication failed: {e}")
+        raise HTTPException(status_code=500, detail="Email authentication failed. Check SMTP credentials.")
     except Exception as e:
-        print(f"ERROR: Failed to connect to Resend API: {e}")
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=f"Email connection error: {str(e)}")
+        print(f"ERROR: Failed to send email to {to_email}: {e}")
+        raise HTTPException(status_code=500, detail=f"Email sending error: {str(e)}")
 
 def send_verification_email(to_email: str, code: str):
     """Send signup verification code via Gmail SMTP."""
