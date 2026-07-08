@@ -23,6 +23,7 @@ import PublicHealth from './pages/app/PublicHealth';
 import PublicDetails from './pages/app/PublicDetails';
 import Shop from './pages/app/Shop';
 import Subscriptions from './pages/app/Subscriptions';
+import Profile from './pages/app/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           <Route path="app/public-health/:id" element={<PublicHealth />} />
           <Route path="app/shop" element={<Shop />} />
           <Route path="app/subscriptions" element={<Subscriptions />} />
+          <Route path="app/profile" element={<Profile />} />
           <Route path="not-found" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Route>

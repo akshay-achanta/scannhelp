@@ -116,15 +116,35 @@ export default function PublicDetails() {
                   <p className="text-sm text-gray-700 leading-relaxed">{data.description || 'No description'}</p>
                 </div>
               ) : (
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 mb-0.5">Blood Group</p>
-                    <p className="text-sm font-bold text-red-600">{data.blood_group || 'N/A'}</p>
+                <div className="space-y-3">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-0.5">Blood Group</p>
+                      <p className="text-sm font-bold text-red-600">{data.blood_group || 'N/A'}</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-0.5">Allergies</p>
+                      <p className="text-sm font-bold text-gray-900">{data.allergies || 'None'}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 mb-0.5">Allergies</p>
-                    <p className="text-sm font-bold text-gray-900">{data.allergies || 'None'}</p>
-                  </div>
+                  {data.conditions && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Health Conditions</p>
+                      <p className="text-sm text-gray-700">{data.conditions}</p>
+                    </div>
+                  )}
+                  {data.medications && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Medications</p>
+                      <p className="text-sm text-gray-700">{data.medications}</p>
+                    </div>
+                  )}
+                  {data.physically_disabled && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Physically Disabled</p>
+                      <p className="text-sm font-bold text-red-600">Yes</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -150,6 +170,14 @@ export default function PublicDetails() {
                     <a href={`tel:${data.alt_number || data.alternate_contact}`} className="text-sm text-gray-500 block mt-2 hover:underline">
                       Alt: {data.alt_number || data.alternate_contact}
                     </a>
+                  )}
+                  {!isProduct && data.primary_doctor_number && (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-500 mb-0.5">Primary Doctor</p>
+                      <a href={`tel:${data.primary_doctor_number}`} className="text-sm font-bold text-gray-900 block hover:underline">
+                        <Phone className="h-3 w-3 inline mr-1" /> {data.primary_doctor_number}
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>

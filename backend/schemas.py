@@ -16,6 +16,11 @@ class GoogleLogin(BaseModel):
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    mobile: Optional[str] = Field(None, max_length=15, pattern=r'^\d*$')
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    mobile: Optional[str] = Field(None, max_length=15, pattern=r'^\d*$')
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=20)

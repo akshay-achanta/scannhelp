@@ -78,7 +78,8 @@ def run_migrations(db: Session = Depends(get_db)):
         "ALTER TABLE users ADD COLUMN reset_code VARCHAR",
         "ALTER TABLE users ADD COLUMN reset_code_expires TIMESTAMP",
         "ALTER TABLE users ADD COLUMN reset_attempts INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN reset_rate_limit_until TIMESTAMP"
+        "ALTER TABLE users ADD COLUMN reset_rate_limit_until TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN mobile VARCHAR"
     ]
     for q in queries:
         try:
@@ -235,6 +236,27 @@ def google_auth(data: schemas.GoogleLogin, db: Session = Depends(get_db)):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error during Google auth: {str(e)}")
 
+# --- User Profile Endpoints ---
+
+@app.get("/users/me", response_model=schemas.UserRead)
+def get_user_profile(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+@app.put("/users/me", response_model=schemas.UserRead)
+def update_user_profile(
+    user_update: schemas.UserUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    if user_update.full_name is not None:
+        current_user.full_name = user_update.full_name
+    if user_update.mobile is not None:
+        current_user.mobile = user_update.mobile
+        
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 # --- Product Endpoints ---
 
 @app.get("/products", response_model=List[schemas.ProductRead])
@@ -374,15 +396,16 @@ def verify_scan(t_t: int, t_id: str, db: Session = Depends(get_db)):
     if not item or not getattr(item, 'is_assigned', False):
         return {"t_id": t_id, "t_t": t_t, "status": "unassigned"}
         
-    # For products: check is_lost. For health: check display_information (visible to public)
+    # For products: check is_lost to decide if public details are shown
+    # For health: ALWAYS show public page (basic info always visible for emergencies);
+    #             display_information only controls what extra details appear within the page
     if t_t == 1:
         if getattr(item, 'is_lost', False):
             return {"t_id": t_id, "t_t": t_t, "status": "lost"}
+        return {"t_id": t_id, "t_t": t_t, "status": "assigned"}
     else:
-        if getattr(item, 'display_information', False):
-            return {"t_id": t_id, "t_t": t_t, "status": "lost"}
-        
-    return {"t_id": t_id, "t_t": t_t, "status": "assigned"}
+        # Health profiles always go to public page
+        return {"t_id": t_id, "t_t": t_t, "status": "lost"}
 
 @app.post("/activate")
 def activate_tag(req: schemas.TagActivateRequest, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -456,6 +479,7 @@ def get_public_details(t_id: str, t_t: int, db: Session = Depends(get_db)):
             "address": item.address if is_displayed else None,
             "notes": item.notes if is_displayed else None,
             "physically_disabled": item.physically_disabled if is_displayed else False,
+            "primary_doctor_number": item.primary_doctor_number if is_displayed else None,
             "display_information": is_displayed,
         }
     

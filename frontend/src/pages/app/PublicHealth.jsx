@@ -100,7 +100,7 @@ export default function PublicHealth() {
                   <AlertTriangle className="h-4 w-4 mr-2 text-orange-500" /> Special Instructions
                 </h2>
                 <div className="bg-orange-50 rounded-2xl p-4 italic text-gray-700 text-sm border border-orange-100">
-                  "{data.notes}"
+                  {`"${data.notes}"`}
                 </div>
               </div>
             )}
@@ -152,6 +152,14 @@ export default function PublicHealth() {
                       <a href={`tel:${data.alt_number || data.alternate_contact}`} className="text-sm text-gray-500 block mt-2 hover:underline">
                         Alt: {data.alt_number || data.alternate_contact}
                       </a>
+                    )}
+                    {data.primary_doctor_number && (
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-500 mb-0.5">Primary Doctor</p>
+                        <a href={`tel:${data.primary_doctor_number}`} className="text-sm font-bold text-gray-900 block hover:underline">
+                          <Phone className="h-3 w-3 inline mr-1" /> {data.primary_doctor_number}
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>

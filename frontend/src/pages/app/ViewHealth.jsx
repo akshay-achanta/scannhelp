@@ -184,6 +184,12 @@ export default function ViewHealth() {
                 <p className="text-xs text-gray-500 mb-0.5">Primary Phone</p>
                 <p className="text-sm font-bold text-gray-900">{record.mobile}</p>
               </div>
+              {record.alt_number && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Alternate Phone</p>
+                  <p className="text-sm font-bold text-gray-900">{record.alt_number}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">Primary Doctor</p>
                 <p className="text-sm font-bold text-gray-900">{record.primary_doctor_number || 'N/A'}</p>

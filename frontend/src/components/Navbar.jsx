@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +27,17 @@ export default function Navbar() {
     return () => {
       clearInterval(interval);
     };
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -67,15 +80,35 @@ export default function Navbar() {
                     <LayoutDashboard className="h-5 w-5" />
                     Dashboard
                   </Link>
-                  <button 
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-gray-500 hover:text-red-600 font-bold transition-colors"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Sign Out
-                  </button>
-                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center border-2 border-primary/20 shadow-sm">
-                    <User className="h-5 w-5 text-primary" />
+
+                  {/* Profile Avatar Dropdown */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setShowDropdown(prev => !prev)}
+                      className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center border-2 border-primary/20 shadow-sm hover:bg-orange-200 transition-colors"
+                    >
+                      <User className="h-5 w-5 text-primary" />
+                    </button>
+
+                    {showDropdown && (
+                      <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                          onClick={() => { setShowDropdown(false); navigate('/app/profile'); }}
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <User className="h-4 w-4 text-gray-500" />
+                          Profile
+                        </button>
+                        <div className="border-t border-gray-100" />
+                        <button
+                          onClick={() => { setShowDropdown(false); handleLogout(); }}
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

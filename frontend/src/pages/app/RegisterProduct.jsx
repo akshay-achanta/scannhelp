@@ -19,7 +19,10 @@ const schema = z.object({
   description: z.string().max(500).optional(),
   name: z.string().min(1, 'Name is required').max(100).regex(/[a-zA-Z]/, 'Name must contain at least one letter'),
   mobile: z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Must contain only digits'),
-  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
+  alt_number: z.union([
+    z.literal(''),
+    z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Must contain only digits')
+  ]).optional(),
   address: z.string().min(1, 'Address is required').max(255).regex(/[a-zA-Z]/, 'Address must contain letters'),
   reward_amount: z.string().regex(/^\d*$/, 'Must contain only digits').max(50).optional(),
   notes: z.string().max(1000).optional(),

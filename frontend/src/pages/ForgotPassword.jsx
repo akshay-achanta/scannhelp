@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, KeyRound, ArrowRight, ArrowLeft, AlertCircle, CheckCircle2, Eye, EyeOff, Clock } from 'lucide-react';
 import { api } from '../services/api';
@@ -10,7 +10,11 @@ export default function ForgotPassword() {
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorState, setErrorState] = useState({ msg: '', key: 0 });
+  const error = errorState.msg;
+  const setError = useCallback((msg) => {
+    setErrorState(prev => ({ msg, key: msg ? prev.key + 1 : prev.key }));
+  }, []);
   const [warning, setWarning] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,6 +23,13 @@ export default function ForgotPassword() {
   const [attemptsRemaining, setAttemptsRemaining] = useState(null);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const timerRef = useRef(null);
+  const errorRef = useRef(null);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorState.key]);
 
   // Countdown timer for lockout
   useEffect(() => {
@@ -181,7 +192,7 @@ export default function ForgotPassword() {
 
           {/* Error banner (non-lockout) */}
           {error && lockoutSeconds === 0 && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm">
+            <div ref={errorRef} className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               {error}
             </div>

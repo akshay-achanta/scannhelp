@@ -14,6 +14,7 @@ with engine.connect() as conn:
         "ALTER TABLE users ADD COLUMN reset_code_expires TIMESTAMP",
         "ALTER TABLE users ADD COLUMN reset_attempts INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN reset_rate_limit_until TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN mobile VARCHAR",
     ]
     for q in queries:
         try:

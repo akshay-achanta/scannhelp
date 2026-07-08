@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle,
@@ -74,7 +74,19 @@ export default function LoginSignup() {
       console.error('Failed to save draft', e);
     }
   }, [email, name, password, confirmPassword]);
-  const [error, setError] = useState('');
+  const [errorState, setErrorState] = useState({ msg: '', key: 0 });
+  const error = errorState.msg;
+  const setError = useCallback((msg) => {
+    setErrorState(prev => ({ msg, key: msg ? prev.key + 1 : prev.key }));
+  }, []);
+  const errorRef = useRef(null);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorState.key]);
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -279,7 +291,7 @@ export default function LoginSignup() {
 
           <div className="p-8">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600 text-sm">
+              <div ref={errorRef} className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600 text-sm">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>

@@ -268,8 +268,8 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-4">
               <button
                 onClick={() => {
-                  const id = Math.random().toString(36).substr(2, 9);
-                  navigate(`/app/register/product?id=${id}`);
+                  setShowSheet(false);
+                  navigate('/app/register/product');
                 }}
                 className="flex items-center p-4 bg-orange-50 rounded-2xl border border-orange-100 hover:bg-orange-100 transition-colors text-left"
               >

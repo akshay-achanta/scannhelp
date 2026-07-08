@@ -137,6 +137,28 @@ export const api = {
     sessionStorage.removeItem('scannhelp_token_expires_at');
   },
 
+  // User Profile
+  async getUserProfile() {
+    const response = await handleResponse(await fetch(`${API_URL}/users/me`, {
+      headers: getHeaders(),
+    }));
+    if (!response.ok) throw new Error('Failed to fetch user profile');
+    return response.json();
+  },
+
+  async updateUserProfile(data) {
+    const response = await handleResponse(await fetch(`${API_URL}/users/me`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }));
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to update profile');
+    }
+    return response.json();
+  },
+
   // Products
   async getProducts() {
     const response = await handleResponse(await fetch(`${API_URL}/products`, {

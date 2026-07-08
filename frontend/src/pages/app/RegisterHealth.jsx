@@ -15,14 +15,20 @@ const schema = z.object({
   id: z.string().min(1, 'Tag ID is required'),
   blood_group: z.string().min(1, 'Blood group is required'),
   existing_health_issues: z.string().max(500).optional(),
-  primary_doctor_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
+  primary_doctor_number: z.union([
+    z.literal(''),
+    z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Enter numbers only')
+  ]).optional(),
   allergies: z.string().max(500).optional(),
   existing_medicines: z.string().max(500).optional(),
   notes: z.string().max(1000).optional(),
   physically_disabled: z.boolean().default(false),
   name: z.string().min(1, 'Name is required').max(100).regex(/[a-zA-Z]/, 'Name must contain at least one letter'),
-  mobile: z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Must contain only digits'),
-  alt_number: z.string().regex(/^\d*$/, 'Must contain only digits').max(10, 'Maximum 10 digits').optional(),
+  mobile: z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Enter numbers only'),
+  alt_number: z.union([
+    z.literal(''),
+    z.string().length(10, 'Must be exactly 10 digits').regex(/^\d{10}$/, 'Enter numbers only')
+  ]).optional(),
   address: z.string().min(1, 'Address is required').max(255).regex(/[a-zA-Z]/, 'Address must contain letters'),
   display_information: z.boolean().default(false),
 });
@@ -53,7 +59,7 @@ export default function RegisterHealth() {
     const fieldsForStep = {
       1: ['id', 'name', 'blood_group'],
       2: ['existing_health_issues', 'allergies', 'existing_medicines'],
-      3: ['mobile', 'address'],
+      3: ['mobile', 'alt_number', 'primary_doctor_number', 'address'],
       4: ['display_information', 'notes'],
     };
     
@@ -86,10 +92,19 @@ export default function RegisterHealth() {
           const profile = await api.getHealthProfile(initialId);
           if (profile) {
             const formData = {
-              ...profile,
-              existing_medicines: profile.medications,
-              existing_health_issues: profile.conditions,
-              mobile: profile.emergency_phone,
+              id: profile.id || initialId,
+              name: profile.name || '',
+              blood_group: profile.blood_group || '',
+              allergies: profile.allergies || '',
+              existing_medicines: profile.medications || '',
+              existing_health_issues: profile.conditions || '',
+              mobile: profile.emergency_phone || '',
+              alt_number: profile.alt_number || '',
+              primary_doctor_number: profile.primary_doctor_number || '',
+              address: profile.address || '',
+              notes: profile.notes || '',
+              physically_disabled: profile.physically_disabled || false,
+              display_information: profile.display_information || false,
             };
             reset(formData);
             setIsEdit(true);
@@ -301,8 +316,11 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Emergency Phone Number *</label>
                     <input 
                       {...register('mobile')} 
+                      type="tel"
+                      inputMode="numeric"
                       maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      onPaste={(e) => { const text = e.clipboardData.getData('text'); if (!/^\d+$/.test(text)) e.preventDefault(); }}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
                       placeholder="0000000000" 
                     />
@@ -312,10 +330,13 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Alternate Phone Number</label>
                     <input 
                       {...register('alt_number')} 
+                      type="tel"
+                      inputMode="numeric"
                       maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      onPaste={(e) => { const text = e.clipboardData.getData('text'); if (!/^\d+$/.test(text)) e.preventDefault(); }}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.alt_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
-                      placeholder="Optional"
+                      placeholder="0000000000"
                     />
                     {errors.alt_number && <p className="mt-1 text-xs text-red-500">{errors.alt_number.message}</p>}
                   </div>
@@ -323,10 +344,13 @@ export default function RegisterHealth() {
                     <label className="block text-sm font-bold text-gray-700 mb-1">Primary Doctor's Number</label>
                     <input 
                       {...register('primary_doctor_number')} 
+                      type="tel"
+                      inputMode="numeric"
                       maxLength={10}
                       onKeyPress={(e) => !/[0-9]/.test(e.key) && e.preventDefault()}
+                      onPaste={(e) => { const text = e.clipboardData.getData('text'); if (!/^\d+$/.test(text)) e.preventDefault(); }}
                       className={`w-full px-4 py-3 border rounded-xl outline-none transition-all ${errors.primary_doctor_number ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`} 
-                      placeholder="Optional"
+                      placeholder="0000000000"
                     />
                     {errors.primary_doctor_number && <p className="mt-1 text-xs text-red-500">{errors.primary_doctor_number.message}</p>}
                   </div>
@@ -384,6 +408,18 @@ export default function RegisterHealth() {
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Emergency Contact</span>
                     <span className="text-sm font-bold text-gray-900">{formData.mobile}</span>
                   </div>
+                  {formData.alt_number && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Alternate Phone</span>
+                      <span className="text-sm font-bold text-gray-900">{formData.alt_number}</span>
+                    </div>
+                  )}
+                  {formData.primary_doctor_number && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Primary Doctor</span>
+                      <span className="text-sm font-bold text-gray-900">{formData.primary_doctor_number}</span>
+                    </div>
+                  )}
                   {formData.allergies && (
                     <div className="flex justify-between border-b border-gray-200 pb-3">
                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Allergies</span>
@@ -400,6 +436,18 @@ export default function RegisterHealth() {
                     <div className="flex justify-between border-b border-gray-200 pb-3">
                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Medications</span>
                       <span className="text-sm font-bold text-gray-700 text-right max-w-[60%]">{formData.existing_medicines}</span>
+                    </div>
+                  )}
+                  {formData.address && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Address</span>
+                      <span className="text-sm font-bold text-gray-700 text-right max-w-[60%]">{formData.address}</span>
+                    </div>
+                  )}
+                  {formData.notes && (
+                    <div className="flex justify-between border-b border-gray-200 pb-3">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Notes</span>
+                      <span className="text-sm font-bold text-gray-700 text-right max-w-[60%]">{formData.notes}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-b border-gray-200 pb-3">
