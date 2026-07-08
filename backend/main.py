@@ -23,6 +23,14 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Auto-migrate: Ensure mobile column exists
+from sqlalchemy import text
+try:
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN mobile VARCHAR"))
+except Exception:
+    pass  # Column likely already exists
+
 app = FastAPI(title="ScanNHelp API")
 
 # ✅ Dynamic CORS configuration for production
