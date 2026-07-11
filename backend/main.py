@@ -36,7 +36,7 @@ app = FastAPI(title="ScanNHelp API")
 # ✅ Dynamic CORS configuration for production
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 allowed_origins = [o.strip(' "\'') for o in env_origins.split(",") if o.strip() and o.strip() != "*"]
-must_have = ["http://localhost:3000", "http://localhost:5173", "https://scannhelp.com", "https://www.scannhelp.com"]
+must_have = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://scannhelp.com", "https://www.scannhelp.com"]
 for origin in must_have:
     if origin not in allowed_origins:
         allowed_origins.append(origin)

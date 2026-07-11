@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Chatbot from '../components/Chatbot';
 
 export default function MainLayout() {
   const navigate = useNavigate();
@@ -71,6 +72,9 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+
+      {/* Global Chatbot */}
+      <Chatbot />
 
       {/* Expiry Warning Modal */}
       {showWarning && (
