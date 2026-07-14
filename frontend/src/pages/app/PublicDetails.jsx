@@ -5,6 +5,7 @@ import {
   AlertTriangle, Loader2, ArrowLeft, Heart, CheckCircle2, RefreshCw
 } from 'lucide-react';
 import { api } from '../../services/api';
+import AccessDenied from '../../components/AccessDenied';
 
 export default function PublicDetails() {
   const { id } = useParams();
@@ -54,21 +55,7 @@ export default function PublicDetails() {
 
   // ── Error — not found ──────────────────────────────────────────────────────
   if (error === 'NOT_FOUND' || !data) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-center">
-        <AlertTriangle className="h-16 w-16 text-red-400 mb-6" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Tag Not Found</h1>
-        <p className="text-gray-500 mb-8 max-w-sm">
-          This QR code doesn't match any registered item. It may have been deleted or is invalid.
-        </p>
-        <button
-          onClick={() => navigate('/')}
-          className="px-8 py-3 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/25 transition-all active:scale-95"
-        >
-          Go to Homepage
-        </button>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   // ── Error — network ────────────────────────────────────────────────────────
@@ -94,65 +81,6 @@ export default function PublicDetails() {
   }
 
   const isProduct = t_t === '1';
-  const isLost = data.is_lost === true; // only present for products
-
-  // ── Product: Safe (not lost) ───────────────────────────────────────────────
-  if (isProduct && !isLost) {
-    return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Safe header */}
-        <div className="bg-blue-600 text-white py-12 px-4 text-center">
-          <div className="max-w-xl mx-auto">
-            <CheckCircle2 className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-3xl font-extrabold mb-2 uppercase tracking-tight">
-              Item Is Safe
-            </h1>
-            <p className="text-blue-100 font-medium text-base">
-              This item is registered and safely with its owner.
-            </p>
-          </div>
-        </div>
-
-        <div className="max-w-xl mx-auto px-4 -mt-8 space-y-5">
-          {/* Item info card */}
-          <div className="bg-white rounded-3xl p-6 shadow-xl border border-blue-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Package className="h-4 w-4" /> Item Info
-            </h2>
-            <p className="text-xl font-black text-gray-900">
-              {data.device_name || 'Unknown Item'}
-            </p>
-            {data.description && (
-              <p className="text-sm text-gray-500 mt-2 leading-relaxed">{data.description}</p>
-            )}
-          </div>
-
-          {/* Notice */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
-            <p className="text-sm font-semibold text-amber-800 mb-1">
-              🔒 Contact details are private
-            </p>
-            <p className="text-xs text-amber-700 leading-relaxed">
-              The owner's contact info is only shared when this item is reported as lost.
-              If you found this item and it doesn't belong to you, please scan again — the owner
-              may have already marked it lost.
-            </p>
-          </div>
-
-          <div className="text-center pt-4">
-            <p className="text-xs text-gray-400 mb-4">Secured by ScannHelp</p>
-            <button
-              onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all shadow-sm active:scale-95"
-            >
-              <ArrowLeft className="h-4 w-4" /> Go to Homepage
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Product: Lost / Health: always shown ──────────────────────────────────
   return (

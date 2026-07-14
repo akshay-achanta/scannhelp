@@ -50,9 +50,9 @@ export default function ScanRedirect() {
             break;
           }
           case 'assigned':
+            navigate('/not-found', { replace: true });
+            break;
           case 'lost':
-            // Both assigned and lost items show the public details page.
-            // The backend decides what data to include based on is_lost.
             navigate(`/app/public-details/${t_id}?t_t=${t_t || '1'}`, {
               replace: true,
             });
