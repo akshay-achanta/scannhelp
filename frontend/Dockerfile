@@ -3,22 +3,15 @@ FROM node:22-alpine as build-stage
 
 WORKDIR /app
 
-# Declare build arguments BEFORE copying code
-ARG VITE_API_URL
-ARG VITE_GOOGLE_CLIENT_ID
-
-# Set them as environment variables so Vite can read them during build
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
-
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
 # Copy the rest of the code and build
+# Vite will read VITE_API_URL and other vars from .env.production
 COPY . .
 
-# Build the app (Vite will embed the env vars into the bundle)
+# Build the app (Vite will embed the env vars from .env.production into the bundle)
 RUN npm run build
 
 # Step 2: Serve with Nginx
