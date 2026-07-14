@@ -451,27 +451,25 @@ def get_public_details(t_id: str, t_t: int, db: Session = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Tag not found")
     
-    # For products: check is_lost. For health: return partial data even if display_information is false
-    if t_t == 1:
-        if not getattr(item, 'is_lost', False):
-            raise HTTPException(status_code=404, detail="Active tag not found")
-    else:
-        # No 404 check needed here; the frontend will restrict view based on display_information
-        pass
-    
     # Build a safe serializable dict from the model
+    # Products: always return basic info. Contact details only shown if display_information=True.
+    # is_lost is included so the frontend can switch between "Safe" and "Lost" modes.
     if t_t == 1:
+        is_lost = getattr(item, 'is_lost', False)
         is_displayed = getattr(item, 'display_information', False)
+        # Contact info is only shown when the item is lost AND display_information is true
+        show_contact = is_lost and is_displayed
         data = {
             "device_name": item.device_name,
             "description": item.description,
-            "name": item.name if is_displayed else None,
-            "mobile": item.mobile if is_displayed else None,
-            "alt_number": item.alt_number if is_displayed else None,
-            "address": item.address if is_displayed else None,
-            "reward_amount": item.reward_amount,
-            "notes": item.notes,
-            "display_information": is_displayed,
+            "name": item.name if show_contact else None,
+            "mobile": item.mobile if show_contact else None,
+            "alt_number": item.alt_number if show_contact else None,
+            "address": item.address if show_contact else None,
+            "reward_amount": item.reward_amount if is_lost else None,
+            "notes": item.notes if is_lost else None,
+            "display_information": show_contact,
+            "is_lost": is_lost,
         }
     else:
         is_displayed = getattr(item, 'display_information', False)

@@ -25,16 +25,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+/* ── Mobile-first reset ───────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px; /* Account for fixed navbar */
+  /* Prevent horizontal overflow / scroll on mobile */
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
+  /* Remove tap highlight on mobile (Android/Chrome) */
+  -webkit-tap-highlight-color: transparent;
 }
+
 
 /* Neat Custom Scrollbar */
 ::-webkit-scrollbar {

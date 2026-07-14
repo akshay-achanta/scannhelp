@@ -3,10 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Proper mobile viewport: no user-scaling issues, full width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Theme color shown in mobile browser chrome (Android/iOS) -->
+    <meta name="theme-color" content="#ff7f00" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>ScanNHelp</title>
+    <!-- Google OAuth -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <meta name="description" content="ScanNHelp provides a simple and effective solution for keeping track of your belongings." />
+    <!-- SEO -->
+    <meta name="description" content="ScanNHelp — Smart QR-code tracking for your belongings and health records. Scan any QR code to access product details, warranty info, or emergency health profiles instantly." />
+    <meta name="keywords" content="QR code, product tracking, health records, lost and found, scannhelp" />
+    <!-- Open Graph for sharing links on phones/social -->
+    <meta property="og:title" content="ScanNHelp" />
+    <meta property="og:description" content="Smart QR-code tracking for your belongings and health records." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://scannhelp.com" />
   </head>
   <body>
     <div id="root"></div>

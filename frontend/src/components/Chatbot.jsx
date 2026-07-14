@@ -215,12 +215,12 @@ function MessageBubble({ msg }) {
       style={{ animation: 'chatFadeUp 0.3s ease forwards' }}
     >
       {isBot && (
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
-          <Bot size={14} className="text-white" />
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
+          <Bot size={12} className="text-white" />
         </div>
       )}
       <div
-        className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+        className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm leading-relaxed shadow-sm ${
           isBot
             ? msg.isError
               ? 'bg-red-50 text-red-700 rounded-bl-sm border border-red-100'
@@ -229,41 +229,23 @@ function MessageBubble({ msg }) {
         }`}
       >
         {msg.text}
-        {/* Removed AI-powered response text */}
       </div>
     </div>
   );
 }
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
-function TypingIndicator({ isApi }) {
+function TypingIndicator() {
   return (
     <div className="flex gap-2 items-end justify-start">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
-        <Bot size={14} className="text-white" />
+      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
+        <Bot size={12} className="text-white" />
       </div>
-      <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex flex-col gap-1.5">
-        <div className="flex gap-1 items-center">
-          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-        </div>
-        {/* Removed Searching knowledge base text */}
+      <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-3 py-2.5 shadow-sm flex gap-1 items-center">
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '300ms' }} />
       </div>
-    </div>
-  );
-}
-
-// ─── API Status Badge ─────────────────────────────────────────────────────────
-function ApiBadge({ isConnected }) {
-  return (
-    <div
-      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${
-        isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-      }`}
-    >
-      {isConnected ? <Wifi size={9} /> : <WifiOff size={9} />}
-      {isConnected ? 'AI On' : 'Offline'}
     </div>
   );
 }
@@ -275,6 +257,14 @@ export default function Chatbot() {
   const [showTooltip, setShowTooltip] = useState(true);
   const [apiConnected, setApiConnected] = useState(true);
   const [usingApi, setUsingApi] = useState(false);
+  // Detect if we're on a small screen (mobile)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('scannbot_chat');
@@ -292,7 +282,7 @@ export default function Chatbot() {
       {
         id: 1,
         sender: 'bot',
-        text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp or any general question!",
+        text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp!",
       },
     ];
   });
@@ -321,6 +311,16 @@ export default function Chatbot() {
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 300);
   }, [open]);
+
+  // Prevent body scroll when chat is open on mobile
+  useEffect(() => {
+    if (isMobile && open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobile, open]);
 
   const sendMessage = async (text) => {
     const trimmed = (text || input).trim();
@@ -379,7 +379,7 @@ export default function Chatbot() {
         {
           id: Date.now() + 1,
           sender: 'bot',
-          text: "I'm having trouble reaching my knowledge base right now. For detailed help, visit our Contact page or email support@scannhelp.com.",
+          text: "I'm having trouble reaching my knowledge base right now. For help, email support@scannhelp.com.",
           isError: true,
         },
       ]);
@@ -397,7 +397,7 @@ export default function Chatbot() {
     setMessages([{
       id: Date.now(),
       sender: 'bot',
-      text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp or any general question!"
+      text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp!"
     }]);
   };
 
@@ -413,6 +413,10 @@ export default function Chatbot() {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to   { opacity: 1; transform: translateY(0)    scale(1);    }
         }
+        @keyframes chatSlideUp {
+          from { opacity: 0; transform: translateY(100%); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
         @keyframes tooltipPop {
           from { opacity: 0; transform: translateX(10px); }
           to   { opacity: 1; transform: translateX(0);    }
@@ -422,13 +426,15 @@ export default function Chatbot() {
           100% { transform: scale(1.65); opacity: 0;   }
         }
         .chat-window-anim   { animation: chatSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .chat-mobile-anim   { animation: chatSlideUp 0.3s ease forwards; }
         .tooltip-pop-anim   { animation: tooltipPop 0.4s ease forwards; }
         .pulse-ring-anim    { animation: pulseRing 2s ease-out infinite; }
       `}</style>
 
       {/* ── FAB area ── */}
-      <div className="fixed bottom-12 right-12 z-[9998] flex flex-col items-end gap-3">
-        {showTooltip && !open && (
+      {/* Desktop: bottom-12 right-12 / Mobile: bottom-5 right-4, smaller button */}
+      <div className="fixed bottom-5 right-4 sm:bottom-12 sm:right-12 z-[9998] flex flex-col items-end gap-2 sm:gap-3">
+        {showTooltip && !open && !isMobile && (
           <div className="tooltip-pop-anim flex items-center gap-2 bg-white rounded-2xl rounded-br-sm px-4 py-2.5 shadow-xl border border-gray-100 text-sm text-gray-700 font-medium whitespace-nowrap">
             <Sparkles size={14} className="text-orange-500" />
             Got any questions? I&apos;m happy to help!
@@ -439,18 +445,22 @@ export default function Chatbot() {
           id="chatbot-toggle-btn"
           onClick={() => { setOpen((o) => !o); setShowTooltip(false); }}
           aria-label="Toggle chatbot"
-          className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-2xl hover:scale-110 active:scale-95 transition-transform duration-200 flex flex-col items-center justify-center gap-0.5"
+          className={`relative rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-2xl hover:scale-110 active:scale-95 transition-transform duration-200 flex flex-col items-center justify-center gap-0.5
+            ${isMobile ? 'w-14 h-14' : 'w-20 h-20'}
+          `}
           style={{ boxShadow: '0 8px 30px rgba(255,127,0,0.45)' }}
         >
           {!open && location.pathname === '/' && (
             <span className="pulse-ring-anim absolute inset-0 rounded-full bg-orange-400 opacity-70" />
           )}
           {open ? (
-            <ChevronDown size={32} />
+            <ChevronDown size={isMobile ? 22 : 32} />
           ) : (
             <>
-              <Bot size={28} />
-              <span className="text-[11px] font-bold tracking-widest leading-none">ASK ME</span>
+              <Bot size={isMobile ? 20 : 28} />
+              {!isMobile && (
+                <span className="text-[11px] font-bold tracking-widest leading-none">ASK ME</span>
+              )}
             </>
           )}
         </button>
@@ -458,97 +468,192 @@ export default function Chatbot() {
 
       {/* ── Chat Window ── */}
       {open && (
-        <div
-          className="chat-window-anim fixed bottom-36 right-12 z-[9997] w-[360px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-          style={{ height: '520px', maxWidth: 'calc(100vw - 3rem)', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-5 py-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-white font-bold text-sm leading-tight">ScannBot</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-green-300" style={{ boxShadow: '0 0 6px #86efac' }} />
-                <p className="text-orange-100 text-xs">Online · AI-Powered</p>
+        <>
+          {/* Mobile: full-screen overlay */}
+          {isMobile ? (
+            <div
+              className="chat-mobile-anim fixed inset-0 z-[9997] bg-white flex flex-col"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Bot size={16} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-bold text-sm leading-tight">ScannBot</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-300" style={{ boxShadow: '0 0 6px #86efac' }} />
+                    <p className="text-orange-100 text-xs">Online · AI-Powered</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    id="chatbot-clear-btn"
+                    onClick={clearChat}
+                    title="Reset Chat"
+                    className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-[11px] text-white font-medium transition-colors"
+                    aria-label="Clear chat"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    id="chatbot-close-btn"
+                    onClick={() => setOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                    aria-label="Close chatbot"
+                  >
+                    <X size={16} className="text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50/60">
+                {messages.map((msg) => (
+                  <MessageBubble key={msg.id} msg={msg} />
+                ))}
+                {isTyping && <TypingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Suggested questions */}
+              <div className="px-3 py-2 border-t border-gray-100 bg-white flex-shrink-0">
+                <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ flexWrap: 'nowrap' }}>
+                  {SUGGESTED_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => sendMessage(q)}
+                      disabled={isTyping}
+                      className="whitespace-nowrap text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 font-medium px-3 py-1.5 rounded-full border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Input bar */}
+              <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2 flex-shrink-0">
+                <input
+                  ref={inputRef}
+                  id="chatbot-input"
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message…"
+                  disabled={isTyping}
+                  className="flex-1 bg-gray-100 rounded-xl px-3 py-2 text-sm outline-none transition-all placeholder-gray-400 text-gray-800 disabled:opacity-60"
+                  style={{ caretColor: '#f97316', fontSize: '16px' /* Prevents iOS zoom */ }}
+                />
+                <button
+                  id="chatbot-send-btn"
+                  onClick={() => sendMessage()}
+                  disabled={!input.trim() || isTyping}
+                  className="w-9 h-9 rounded-xl text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                  aria-label="Send message"
+                >
+                  <Send size={14} />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                id="chatbot-clear-btn"
-                onClick={clearChat}
-                title="Reset Chat"
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors text-xs text-white"
-                aria-label="Clear chat"
-              >
-                Clear
-              </button>
-              <button
-                id="chatbot-close-btn"
-                onClick={() => setOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-                aria-label="Close chatbot"
-              >
-                <X size={16} className="text-white" />
-              </button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/60">
-            {messages.map((msg) => (
-              <MessageBubble key={msg.id} msg={msg} />
-            ))}
-            {isTyping && <TypingIndicator isApi={usingApi} />}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Suggested questions */}
-          <div className="px-4 py-2 border-t border-gray-100 bg-white">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Suggested questions
-            </p>
-            <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ flexWrap: 'nowrap' }}>
-              {SUGGESTED_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => sendMessage(q)}
-                  disabled={isTyping}
-                  className="whitespace-nowrap text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 font-medium px-3 py-1.5 rounded-full border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Input bar */}
-          <div className="px-3 py-3 border-t border-gray-100 bg-white flex items-center gap-2">
-            <input
-              ref={inputRef}
-              id="chatbot-input"
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message…"
-              disabled={isTyping}
-              className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder-gray-400 text-gray-800 disabled:opacity-60"
-              style={{ caretColor: '#f97316' }}
-            />
-            <button
-              id="chatbot-send-btn"
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || isTyping}
-              className="w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
-              aria-label="Send message"
+          ) : (
+            /* Desktop: floating window */
+            <div
+              className="chat-window-anim fixed bottom-36 right-12 z-[9997] w-[360px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+              style={{ height: '520px', maxWidth: 'calc(100vw - 3rem)', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
             >
-              <Send size={16} />
-            </button>
-          </div>
-        </div>
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-5 py-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Bot size={20} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-bold text-sm leading-tight">ScannBot</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-2 h-2 rounded-full bg-green-300" style={{ boxShadow: '0 0 6px #86efac' }} />
+                    <p className="text-orange-100 text-xs">Online · AI-Powered</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    id="chatbot-clear-btn"
+                    onClick={clearChat}
+                    title="Reset Chat"
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors text-xs text-white"
+                    aria-label="Clear chat"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    id="chatbot-close-btn"
+                    onClick={() => setOpen(false)}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                    aria-label="Close chatbot"
+                  >
+                    <X size={16} className="text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/60">
+                {messages.map((msg) => (
+                  <MessageBubble key={msg.id} msg={msg} />
+                ))}
+                {isTyping && <TypingIndicator isApi={usingApi} />}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Suggested questions */}
+              <div className="px-4 py-2 border-t border-gray-100 bg-white">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Suggested questions
+                </p>
+                <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ flexWrap: 'nowrap' }}>
+                  {SUGGESTED_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => sendMessage(q)}
+                      disabled={isTyping}
+                      className="whitespace-nowrap text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 font-medium px-3 py-1.5 rounded-full border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Input bar */}
+              <div className="px-3 py-3 border-t border-gray-100 bg-white flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  id="chatbot-input"
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message…"
+                  disabled={isTyping}
+                  className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder-gray-400 text-gray-800 disabled:opacity-60"
+                  style={{ caretColor: '#f97316' }}
+                />
+                <button
+                  id="chatbot-send-btn"
+                  onClick={() => sendMessage()}
+                  disabled={!input.trim() || isTyping}
+                  className="w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
+                  aria-label="Send message"
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );
