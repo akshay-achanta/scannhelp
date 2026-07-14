@@ -475,7 +475,6 @@ export default function Chatbot() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <ApiBadge isConnected={apiConnected} />
               <button
                 id="chatbot-clear-btn"
                 onClick={clearChat}
