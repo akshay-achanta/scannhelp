@@ -1,5 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || '';
-const API_URL = BASE_URL ? BASE_URL.replace(/\/$/, '') : '';
+const API_URL = '/api';
 
 const getHeaders = () => {
   const token = sessionStorage.getItem('scannhelp_token');
@@ -7,6 +6,14 @@ const getHeaders = () => {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
   };
+};
+
+const checkJson = (response) => {
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") === -1) {
+    throw new Error('NETWORK_ERROR: Received non-JSON response from server.');
+  }
+  return response;
 };
 
 const handleResponse = async (response) => {
@@ -20,6 +27,8 @@ const handleResponse = async (response) => {
     }
     throw new Error('Session expired. Please login again.');
   }
+
+  checkJson(response);
   return response;
 };
 
@@ -31,6 +40,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       let errorMessage = 'Signup failed';
@@ -58,6 +68,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       const err = new Error(error.detail || 'Failed to send verification code');
@@ -77,6 +88,7 @@ export const api = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData,
     });
+    checkJson(response);
 
     if (!response.ok) {
       const error = await response.json();
@@ -99,6 +111,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
+    checkJson(response);
 
     if (!response.ok) {
       const error = await response.json();
@@ -119,6 +132,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_token: idToken }),
     });
+    checkJson(response);
 
     if (!response.ok) {
       const error = await response.json();
@@ -236,12 +250,14 @@ export const api = {
   // Public Scan
   async scanId(id) {
     const response = await fetch(`${API_URL}/scan/${id}`);
+    checkJson(response);
     if (!response.ok) throw new Error('Tag not found');
     return response.json();
   },
 
   async verifyScan(t_t, t_id) {
     const response = await fetch(`${API_URL}/scan/verify?t_t=${t_t}&t_id=${t_id}`);
+    checkJson(response);
     if (!response.ok) throw new Error('Verification failed');
     return response.json();
   },
@@ -252,6 +268,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify({ t_t: parseInt(t_t), t_id, details }),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.detail || 'Activation failed');
@@ -261,6 +278,7 @@ export const api = {
 
   async getPublicDetails(id, t_t) {
     const response = await fetch(`${API_URL}/public-details/${id}?t_t=${t_t}`);
+    checkJson(response);
     if (!response.ok) {
       if (response.status === 404) throw new Error('NOT_FOUND');
       throw new Error('Failed to fetch details');
@@ -275,6 +293,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       const err = new Error(error.detail || 'Failed to send reset code');
@@ -290,6 +309,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code }),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.detail || 'Invalid or expired code');
@@ -303,6 +323,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code, new_password, confirm_password }),
     });
+    checkJson(response);
     if (!response.ok) {
       const error = await response.json();
       let errorMessage = 'Failed to reset password';

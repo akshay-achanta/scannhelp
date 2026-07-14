@@ -31,8 +31,9 @@ RUN sed -i 's/worker_processes  auto;/worker_processes 2;/' /etc/nginx/nginx.con
 
 # Railway sets PORT dynamically; default to 80 for local Docker
 ENV PORT=80
+ENV BACKEND_URL=http://localhost:8000
 
 EXPOSE ${PORT}
 
-# At runtime: replace port 80 with $PORT using sed, then start nginx
-CMD sh -c "sed -i \"s/listen 80;/listen ${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s/listen \\\\[::\\\\]:80;/listen \\\\[::\\\\]:${PORT};/\" /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+# At runtime: replace port 80 with $PORT using sed, then replace BACKEND_URL_PLACEHOLDER, and start nginx
+CMD sh -c "sed -i \"s/listen 80;/listen ${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s/listen \\\\[::\\\\]:80;/listen \\\\[::\\\\]:${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s|BACKEND_URL_PLACEHOLDER|${BACKEND_URL}|g\" /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
