@@ -1,8 +1,88 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, ChevronDown, Sparkles } from 'lucide-react';
+import { Bot, X, Send, ChevronDown, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
-// ─── Q&A Knowledge Base ──────────────────────────────────────────────────────
+// ─── Session ID (persisted per browser) ──────────────────────────────────────
+function getOrCreateSessionId() {
+  let sid = localStorage.getItem('scannbot_session_id');
+  if (!sid) {
+    sid = 'sess_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('scannbot_session_id', sid);
+  }
+  return sid;
+}
+
+const SESSION_ID = getOrCreateSessionId();
+const API_URL = 'https://prag-chatbot-production.up.railway.app/api/v1/chat';
+
+// ─── Greeting / Default Messages ─────────────────────────────────────────────
+const GREETING_PATTERNS = [
+  {
+    patterns: ['hi', 'hey', 'hii', 'hiii'],
+    responses: [
+      "Hey there! 👋 Welcome to ScannHelp! I'm ScannBot, your virtual assistant. What can I help you with today?",
+      "Hi! 😊 Great to see you! How can I assist you with ScannHelp today?",
+      "Hey! 👋 I'm ScannBot. Feel free to ask me anything about ScannHelp!",
+    ],
+  },
+  {
+    patterns: ['hello'],
+    responses: [
+      "Hello! 👋 I'm ScannBot, ScannHelp's virtual assistant. How can I help you today?",
+      "Hello there! 😊 Welcome to ScannHelp. What would you like to know?",
+    ],
+  },
+  {
+    patterns: ['good morning', 'gm'],
+    responses: [
+      "Good morning! ☀️ Hope you're having a great start to your day! How can I assist you with ScannHelp?",
+      "Good morning! 🌅 I'm ScannBot, ready to help. What's on your mind today?",
+    ],
+  },
+  {
+    patterns: ['good afternoon'],
+    responses: [
+      "Good afternoon! ☀️ How can I help you with ScannHelp today?",
+    ],
+  },
+  {
+    patterns: ['good evening', 'good night', 'gn'],
+    responses: [
+      "Good evening! 🌙 How can I assist you with ScannHelp tonight?",
+      "Good night! 🌟 I'm still here to help. What do you need?",
+    ],
+  },
+  {
+    patterns: ['how are you', 'how r you', 'how are u', 'wassup', "what's up", 'whats up'],
+    responses: [
+      "I'm doing great, thanks for asking! 😊 Ready to help you with anything ScannHelp related!",
+      "All systems up and running! 🚀 What can I do for you today?",
+    ],
+  },
+  {
+    patterns: ['thanks', 'thank you', 'ty', 'thx', 'thank u'],
+    responses: [
+      "You're welcome! 😊 Is there anything else I can help you with?",
+      "Happy to help! 🙌 Feel free to ask if you have more questions.",
+    ],
+  },
+  {
+    patterns: ['bye', 'goodbye', 'see you', 'cya', 'later'],
+    responses: [
+      "Goodbye! 👋 Feel free to come back anytime. Have a great day!",
+      "See you later! 😊 Don't hesitate to reach out if you need help.",
+    ],
+  },
+  {
+    patterns: ['ok', 'okay', 'alright', 'got it', 'sure'],
+    responses: [
+      "Great! Let me know if you have any other questions. 😊",
+      "Perfect! Feel free to ask anything else.",
+    ],
+  },
+];
+
+// ─── Q&A Knowledge Base ───────────────────────────────────────────────────────
 const QA_PAIRS = [
   {
     keywords: ['what', 'scannhelp', 'about', 'platform', 'service'],
@@ -73,8 +153,27 @@ const SUGGESTED_QUESTIONS = [
   'What subscription plans are available?',
 ];
 
-// ─── Helper: fuzzy match ──────────────────────────────────────────────────────
-function findAnswer(userText) {
+// ─── Helper: check greeting ───────────────────────────────────────────────────
+function findGreetingAnswer(userText) {
+  const lower = userText.toLowerCase().trim();
+  for (const entry of GREETING_PATTERNS) {
+    for (const pat of entry.patterns) {
+      if (
+        lower === pat ||
+        lower.startsWith(pat + ' ') ||
+        lower.endsWith(' ' + pat) ||
+        lower.includes(' ' + pat + ' ')
+      ) {
+        const { responses } = entry;
+        return responses[Math.floor(Math.random() * responses.length)];
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Helper: fuzzy match local QA (requires ≥2 keyword hits) ─────────────────
+function findLocalAnswer(userText) {
   const lower = userText.toLowerCase();
   let best = null;
   let bestScore = 0;
@@ -87,8 +186,24 @@ function findAnswer(userText) {
     }
   }
 
-  if (bestScore >= 1) return best.answer;
-  return "I'm not sure about that yet. For detailed help, please visit our Contact page or email support@scannhelp.com — we'd love to assist you!";
+  if (bestScore >= 2) return best.answer;
+  return null;
+}
+
+// ─── API call to RAG chatbot ──────────────────────────────────────────────────
+async function fetchFromAPI(question) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({ session_id: SESSION_ID, question }),
+  });
+
+  if (!response.ok) throw new Error(`API error: ${response.status}`);
+  const data = await response.json();
+  return data.answer;
 }
 
 // ─── Message Bubble ───────────────────────────────────────────────────────────
@@ -107,28 +222,48 @@ function MessageBubble({ msg }) {
       <div
         className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
           isBot
-            ? 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
+            ? msg.isError
+              ? 'bg-red-50 text-red-700 rounded-bl-sm border border-red-100'
+              : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
             : 'bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-br-sm'
         }`}
       >
         {msg.text}
+        {/* Removed AI-powered response text */}
       </div>
     </div>
   );
 }
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
-function TypingIndicator() {
+function TypingIndicator({ isApi }) {
   return (
     <div className="flex gap-2 items-end justify-start">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-md">
         <Bot size={14} className="text-white" />
       </div>
-      <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex gap-1 items-center">
-        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex flex-col gap-1.5">
+        <div className="flex gap-1 items-center">
+          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+        {/* Removed Searching knowledge base text */}
       </div>
+    </div>
+  );
+}
+
+// ─── API Status Badge ─────────────────────────────────────────────────────────
+function ApiBadge({ isConnected }) {
+  return (
+    <div
+      className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+        isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+      }`}
+    >
+      {isConnected ? <Wifi size={9} /> : <WifiOff size={9} />}
+      {isConnected ? 'AI On' : 'Offline'}
     </div>
   );
 }
@@ -138,36 +273,34 @@ export default function Chatbot() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(true);
+  const [apiConnected, setApiConnected] = useState(true);
+  const [usingApi, setUsingApi] = useState(false);
+
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('scannbot_chat');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Check expiration (1 hour = 3600000 ms)
         if (Date.now() - parsed.timestamp < 3600000) {
           return parsed.messages;
         }
       } catch (e) {
-        console.error("Failed to parse stored chat", e);
+        console.error('Failed to parse stored chat', e);
       }
     }
     return [
       {
         id: 1,
         sender: 'bot',
-        text: "Hi there! I'm ScannBot, your virtual assistant. How can I help you today?",
+        text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp or any general question!",
       },
     ];
   });
 
-  // Save to local storage whenever messages change
   useEffect(() => {
     localStorage.setItem(
       'scannbot_chat',
-      JSON.stringify({
-        timestamp: Date.now(),
-        messages: messages,
-      })
+      JSON.stringify({ timestamp: Date.now(), messages })
     );
   }, [messages]);
 
@@ -176,43 +309,81 @@ export default function Chatbot() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Hide tooltip after 4 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowTooltip(false), 4000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Focus input when opened
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 300);
   }, [open]);
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     const trimmed = (text || input).trim();
-    if (!trimmed) return;
+    if (!trimmed || isTyping) return;
 
     const userMsg = { id: Date.now(), sender: 'user', text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
+    setUsingApi(false);
 
-    // Simulate bot thinking delay
-    setTimeout(() => {
-      const botMsg = {
-        id: Date.now() + 1,
-        sender: 'bot',
-        text: findAnswer(trimmed),
-      };
+    // 1️⃣ Greeting check — instant local reply
+    const greetingAnswer = findGreetingAnswer(trimmed);
+    if (greetingAnswer) {
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'bot', text: greetingAnswer },
+        ]);
+      }, 500 + Math.random() * 300);
+      return;
+    }
+
+    // 2️⃣ Local QA match — high-confidence keyword match
+    const localAnswer = findLocalAnswer(trimmed);
+    if (localAnswer) {
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'bot', text: localAnswer },
+        ]);
+      }, 700 + Math.random() * 400);
+      return;
+    }
+
+    // 3️⃣ Fall back to RAG API
+    setUsingApi(true);
+    try {
+      const apiAnswer = await fetchFromAPI(trimmed);
+      setApiConnected(true);
       setIsTyping(false);
-      setMessages((prev) => [...prev, botMsg]);
-    }, 900 + Math.random() * 400);
+      setUsingApi(false);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'bot', text: apiAnswer, isApi: true },
+      ]);
+    } catch (err) {
+      console.error('ScannBot API error:', err);
+      setApiConnected(false);
+      setIsTyping(false);
+      setUsingApi(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'bot',
+          text: "I'm having trouble reaching my knowledge base right now. For detailed help, visit our Contact page or email support@scannhelp.com.",
+          isError: true,
+        },
+      ]);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -222,9 +393,17 @@ export default function Chatbot() {
     }
   };
 
+  const clearChat = () => {
+    setMessages([{
+      id: Date.now(),
+      sender: 'bot',
+      text: "Hi there! 👋 I'm ScannBot, your AI-powered virtual assistant. Ask me anything about ScannHelp or any general question!"
+    }]);
+  };
+
   return (
     <>
-      {/* ── Keyframe styles ── */}
+      {/* ── Keyframes ── */}
       <style>{`
         @keyframes chatFadeUp {
           from { opacity: 0; transform: translateY(10px); }
@@ -239,24 +418,16 @@ export default function Chatbot() {
           to   { opacity: 1; transform: translateX(0);    }
         }
         @keyframes pulseRing {
-          0%   { transform: scale(1);   opacity: 0.7; }
-          100% { transform: scale(1.65); opacity: 0;  }
+          0%   { transform: scale(1);    opacity: 0.7; }
+          100% { transform: scale(1.65); opacity: 0;   }
         }
-        .chat-window-anim {
-          animation: chatSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        .tooltip-pop-anim {
-          animation: tooltipPop 0.4s ease forwards;
-        }
-        .pulse-ring-anim {
-          animation: pulseRing 2s ease-out infinite;
-        }
+        .chat-window-anim   { animation: chatSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .tooltip-pop-anim   { animation: tooltipPop 0.4s ease forwards; }
+        .pulse-ring-anim    { animation: pulseRing 2s ease-out infinite; }
       `}</style>
 
-      {/* ── Floating Action Button area ── */}
+      {/* ── FAB area ── */}
       <div className="fixed bottom-12 right-12 z-[9998] flex flex-col items-end gap-3">
-
-        {/* Tooltip bubble */}
         {showTooltip && !open && (
           <div className="tooltip-pop-anim flex items-center gap-2 bg-white rounded-2xl rounded-br-sm px-4 py-2.5 shadow-xl border border-gray-100 text-sm text-gray-700 font-medium whitespace-nowrap">
             <Sparkles size={14} className="text-orange-500" />
@@ -264,22 +435,15 @@ export default function Chatbot() {
           </div>
         )}
 
-        {/* FAB button */}
         <button
           id="chatbot-toggle-btn"
-          onClick={() => {
-            setOpen((o) => !o);
-            setShowTooltip(false);
-          }}
+          onClick={() => { setOpen((o) => !o); setShowTooltip(false); }}
           aria-label="Toggle chatbot"
           className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-2xl hover:scale-110 active:scale-95 transition-transform duration-200 flex flex-col items-center justify-center gap-0.5"
           style={{ boxShadow: '0 8px 30px rgba(255,127,0,0.45)' }}
         >
-          {/* Pulse ring - only on landing page */}
           {!open && location.pathname === '/' && (
-            <span
-              className="pulse-ring-anim absolute inset-0 rounded-full bg-orange-400 opacity-70"
-            />
+            <span className="pulse-ring-anim absolute inset-0 rounded-full bg-orange-400 opacity-70" />
           )}
           {open ? (
             <ChevronDown size={32} />
@@ -296,11 +460,7 @@ export default function Chatbot() {
       {open && (
         <div
           className="chat-window-anim fixed bottom-36 right-12 z-[9997] w-[360px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-          style={{
-            height: '520px',
-            maxWidth: 'calc(100vw - 3rem)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-          }}
+          style={{ height: '520px', maxWidth: 'calc(100vw - 3rem)', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-5 py-4 flex items-center gap-3">
@@ -311,39 +471,52 @@ export default function Chatbot() {
               <p className="text-white font-bold text-sm leading-tight">ScannBot</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-green-300" style={{ boxShadow: '0 0 6px #86efac' }} />
-                <p className="text-orange-100 text-xs">Online · Always here to help</p>
+                <p className="text-orange-100 text-xs">Online · AI-Powered</p>
               </div>
             </div>
-            <button
-              id="chatbot-close-btn"
-              onClick={() => setOpen(false)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-              aria-label="Close chatbot"
-            >
-              <X size={16} className="text-white" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ApiBadge isConnected={apiConnected} />
+              <button
+                id="chatbot-clear-btn"
+                onClick={clearChat}
+                title="Reset Chat"
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors text-xs text-white"
+                aria-label="Clear chat"
+              >
+                Clear
+              </button>
+              <button
+                id="chatbot-close-btn"
+                onClick={() => setOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                aria-label="Close chatbot"
+              >
+                <X size={16} className="text-white" />
+              </button>
+            </div>
           </div>
 
-          {/* Messages area */}
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/60">
             {messages.map((msg) => (
               <MessageBubble key={msg.id} msg={msg} />
             ))}
-            {isTyping && <TypingIndicator />}
+            {isTyping && <TypingIndicator isApi={usingApi} />}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested questions – always shown */}
+          {/* Suggested questions */}
           <div className="px-4 py-2 border-t border-gray-100 bg-white">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
               Suggested questions
             </p>
-            <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1" style={{ flexWrap: 'nowrap' }}>
+            <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ flexWrap: 'nowrap' }}>
               {SUGGESTED_QUESTIONS.map((q) => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="whitespace-nowrap text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 font-medium px-3 py-1.5 rounded-full border border-orange-200 transition-colors"
+                  disabled={isTyping}
+                  className="whitespace-nowrap text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 font-medium px-3 py-1.5 rounded-full border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {q}
                 </button>
@@ -361,18 +534,16 @@ export default function Chatbot() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message…"
-              className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder-gray-400 text-gray-800"
+              disabled={isTyping}
+              className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder-gray-400 text-gray-800 disabled:opacity-60"
               style={{ caretColor: '#f97316' }}
             />
             <button
               id="chatbot-send-btn"
               onClick={() => sendMessage()}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isTyping}
               className="w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                boxShadow: '0 4px 14px rgba(249,115,22,0.4)',
-              }}
+              style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 4px 14px rgba(249,115,22,0.4)' }}
               aria-label="Send message"
             >
               <Send size={16} />
