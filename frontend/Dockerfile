@@ -31,7 +31,7 @@ RUN sed -i 's/worker_processes  auto;/worker_processes 2;/' /etc/nginx/nginx.con
 
 # Railway sets PORT dynamically; default to 80 for local Docker
 ENV PORT=80
-ENV BACKEND_URL=http://localhost:8000
+ENV BACKEND_URL=https://api.scannhelp.com
 
 EXPOSE ${PORT}
 
