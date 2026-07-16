@@ -53,7 +53,7 @@ export default function ScanRedirect() {
             navigate('/not-found', { replace: true });
             break;
           case 'lost':
-            navigate(`/app/public-details/${t_id}?t_t=${t_t || '1'}`, {
+            navigate(`/app/public-details/${encodeURIComponent(t_id)}?t_t=${encodeURIComponent(t_t || '1')}`, {
               replace: true,
             });
             break;
