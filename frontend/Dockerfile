@@ -35,5 +35,5 @@ ENV BACKEND_URL=https://api.scannhelp.com
 
 EXPOSE ${PORT}
 
-# At runtime: replace port 80 with $PORT using sed, then replace BACKEND_URL_PLACEHOLDER, and start nginx
-CMD sh -c "sed -i \"s/listen 80;/listen ${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s/listen \\\\[::\\\\]:80;/listen \\\\[::\\\\]:${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s|BACKEND_URL_PLACEHOLDER|${BACKEND_URL}|g\" /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
+# At runtime: extract native resolver, replace PORT, inject BACKEND_URL, and start Nginx
+CMD sh -c "RESOLVER=\$(awk '/^nameserver/ {print \$2}' /etc/resolv.conf | paste -sd ' ') && sed -i \"s/listen 80;/listen ${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s/listen \\\\[::\\\\]:80;/listen \\\\[::\\\\]:${PORT};/\" /etc/nginx/conf.d/default.conf && sed -i \"s|RESOLVER_PLACEHOLDER|\${RESOLVER}|g\" /etc/nginx/conf.d/default.conf && sed -i \"s|BACKEND_URL_PLACEHOLDER|${BACKEND_URL}|g\" /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"
